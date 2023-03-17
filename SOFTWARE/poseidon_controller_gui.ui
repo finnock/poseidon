@@ -902,7 +902,7 @@
             </property>
             <property name="icon">
              <iconset>
-              <normaloff>../../../Downloads/diskette.png</normaloff>../../../Downloads/diskette.png</iconset>
+              <normaloff>icons/disc white.png</normaloff>icons/disc white.png</iconset>
             </property>
            </widget>
           </item>
@@ -913,7 +913,18 @@
             </property>
             <property name="icon">
              <iconset>
-              <normaloff>../../../Downloads/diskette (1).png</normaloff>../../../Downloads/diskette (1).png</iconset>
+              <normaloff>icons/disc black.png</normaloff>icons/disc black.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="toggle_fullscreen_BTN">
+            <property name="text">
+             <string>   Toggle Fullscreen</string>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normaloff>icons/fullscreen.png</normaloff>icons/fullscreen.png</iconset>
             </property>
            </widget>
           </item>

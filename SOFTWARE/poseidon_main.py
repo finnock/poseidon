@@ -184,8 +184,6 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 		# ~~~~~~~~~~~~~~~
 		# MAIN : MENU BAR
 		# ~~~~~~~~~~~~~~~
-		self.ui.load_settings_BTN_2.clicked.connect(self.load_settings)
-		self.ui.save_settings_BTN_2.clicked.connect(self.save_settings)
 
 		# ~~~~~~~~~~~~~~~~
 		# TAB : Controller
@@ -257,6 +255,14 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 		# Set the log file name
 		self.date_string =  datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		self.date_string = self.date_string.replace(":","_") # Replace semicolons with underscores
+
+		# Load and Save Settings
+		self.ui.load_settings_BTN_2.clicked.connect(self.load_settings)
+		self.ui.save_settings_BTN_2.clicked.connect(self.save_settings)
+
+		# Toggle Fullscreen Mode
+
+		self.ui.toggle_fullscreen_BTN.clicked.connect(self.toggle_fullscreen)
 
 		# Px syringe size, populate then connect (population done earlier)
 		self.ui.p1_syringe_DROPDOWN.currentIndexChanged.connect(self.set_p1_syringe)
@@ -778,6 +784,12 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 			with open(name + ".txt", 'w') as f:
 				f.writelines(text)
 				self.statusBar().showMessage("Settings saved in " + name + ".txt")
+
+	def toggle_fullscreen(self):
+		if self.isFullScreen():
+			self.showNormal()
+		else:
+			self.showFullScreen()
 
 	def load_settings(self):
 		# need to make name an tuple otherwise i had an error and app crashed
