@@ -241,15 +241,6 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 		self.ui.absolute_RADIO.toggled.connect(lambda:self.set_coordinate(self.ui.absolute_RADIO))
 		self.ui.incremental_RADIO.toggled.connect(lambda:self.set_coordinate(self.ui.incremental_RADIO))
 
-		# ~~~~~~~~~~~~
-		# TAB : Camera
-		# ~~~~~~~~~~~~
-
-		# Setting camera action buttons
-		self.ui.camera_connect_BTN.clicked.connect(self.start_camera)
-		self.ui.camera_disconnect_BTN.clicked.connect(self.stop_camera)
-		self.ui.camera_capture_image_BTN.clicked.connect(self.save_image)
-
 		# ~~~~~~~~~~~
 		# TAB : Setup
 		# ~~~~~~~~~~~
