@@ -184,8 +184,8 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 		# ~~~~~~~~~~~~~~~
 		# MAIN : MENU BAR
 		# ~~~~~~~~~~~~~~~
-		self.ui.load_settings_BTN.triggered.connect(self.load_settings)
-		self.ui.save_settings_BTN.triggered.connect(self.save_settings)
+		self.ui.load_settings_BTN_2.clicked.connect(self.load_settings)
+		self.ui.save_settings_BTN_2.clicked.connect(self.save_settings)
 
 		# ~~~~~~~~~~~~~~~~
 		# TAB : Controller
@@ -1471,7 +1471,7 @@ def main():
 	app = QtWidgets.QApplication(sys.argv)
 	window = MainWindow()
 	window.setWindowTitle("Poseidon Pumps Controller - Pachter Lab Caltech 2018")
-	window.showFullScreen()
+	window.show()
 	# without this, the script exits immediately.
 	sys.exit(app.exec_())
 
