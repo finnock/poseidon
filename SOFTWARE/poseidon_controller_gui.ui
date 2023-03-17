@@ -17,6 +17,11 @@
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
      <widget class="QTabWidget" name="tabWidget">
+      <property name="font">
+       <font>
+        <pointsize>15</pointsize>
+       </font>
+      </property>
       <property name="focusPolicy">
        <enum>Qt::TabFocus</enum>
       </property>
@@ -348,10 +353,16 @@
                   <item>
                    <widget class="QDoubleSpinBox" name="p2_amount_INPUT">
                     <property name="decimals">
-                     <number>3</number>
+                     <number>0</number>
                     </property>
                     <property name="minimum">
-                     <double>-99.000000000000000</double>
+                     <double>-500.000000000000000</double>
+                    </property>
+                    <property name="maximum">
+                     <double>500.000000000000000</double>
+                    </property>
+                    <property name="stepType">
+                     <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
                     </property>
                    </widget>
                   </item>
@@ -376,10 +387,16 @@
                   <item>
                    <widget class="QDoubleSpinBox" name="p3_amount_INPUT">
                     <property name="decimals">
-                     <number>3</number>
+                     <number>0</number>
                     </property>
                     <property name="minimum">
-                     <double>-99.000000000000000</double>
+                     <double>-500.000000000000000</double>
+                    </property>
+                    <property name="maximum">
+                     <double>500.000000000000000</double>
+                    </property>
+                    <property name="stepType">
+                     <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
                     </property>
                    </widget>
                   </item>
@@ -404,10 +421,16 @@
                   <item>
                    <widget class="QDoubleSpinBox" name="p1_amount_INPUT">
                     <property name="decimals">
-                     <number>3</number>
+                     <number>0</number>
                     </property>
                     <property name="minimum">
-                     <double>-99.000000000000000</double>
+                     <double>-500.000000000000000</double>
+                    </property>
+                    <property name="maximum">
+                     <double>500.000000000000000</double>
+                    </property>
+                    <property name="stepType">
+                     <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
                     </property>
                    </widget>
                   </item>
@@ -643,6 +666,7 @@
                 </property>
                 <property name="font">
                  <font>
+                  <pointsize>15</pointsize>
                   <weight>75</weight>
                   <bold>true</bold>
                  </font>
@@ -690,6 +714,7 @@
               </property>
               <property name="font">
                <font>
+                <pointsize>15</pointsize>
                 <weight>75</weight>
                 <bold>true</bold>
                </font>
