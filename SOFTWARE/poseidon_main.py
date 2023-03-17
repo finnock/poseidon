@@ -1471,7 +1471,7 @@ def main():
 	app = QtWidgets.QApplication(sys.argv)
 	window = MainWindow()
 	window.setWindowTitle("Poseidon Pumps Controller - Pachter Lab Caltech 2018")
-	window.show()
+	window.showFullScreen()
 	# without this, the script exits immediately.
 	sys.exit(app.exec_())
 
