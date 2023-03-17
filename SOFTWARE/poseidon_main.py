@@ -874,9 +874,14 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 
 	# Populate the list of possible syringes to the dropdown menus
 	def populate_syringe_sizes(self):
-		self.syringe_options = ["BD 1 mL", "BD 3 mL", "BD 5 mL", "BD 10 mL", "BD 20 mL", "BD 30 mL", "BD 60 mL"]
-		self.syringe_volumes = [1, 3, 5, 10, 20, 30, 60]
-		self.syringe_areas = [17.34206347, 57.88559215, 112.9089185, 163.539454, 285.022957, 366.0961536, 554.0462538]
+		# labels for each syringe
+		self.syringe_options = ["BD 1 mL", "BD 3 mL", "BD 5 mL", "BD 10 mL", "BD 20 mL", "BD 30 mL", "BD 60 mL", "500 mL"]
+
+		# volumina of the syringes in mL
+		self.syringe_volumes = [1, 3, 5, 10, 20, 30, 60, 500]
+
+		# circle areas of the syringes in mm^2
+		self.syringe_areas = [17.34206347, 57.88559215, 112.9089185, 163.539454, 285.022957, 366.0961536, 554.0462538, 3631.681168]
 
 		self.ui.p1_syringe_DROPDOWN.addItems(self.syringe_options)
 		self.ui.p2_syringe_DROPDOWN.addItems(self.syringe_options)
