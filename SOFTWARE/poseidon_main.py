@@ -12,6 +12,7 @@ import os
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog
+import pyautogui
 
 import cv2
 # note, had to use version 3.2.0.8 otherwise it had its own
@@ -175,6 +176,8 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 		print("=============================\n\n")
 		# here is where you need to end the thread
 
+	def keystroke(self, key):
+		pyautogui.press(key)
 
 	# ===================================
 	# CONNECTING : all the GUI Components
@@ -182,8 +185,20 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 	def connect_all_gui_components(self):
 
 		# ~~~~~~~~~~~~~~~
-		# MAIN : MENU BAR
+		# SIDE : NUMPAD
 		# ~~~~~~~~~~~~~~~
+
+		self.ui.numpad_1_BTN.clicked.connect(lambda: self.keystroke('1'))
+		self.ui.numpad_2_BTN.clicked.connect(lambda: self.keystroke('2'))
+		self.ui.numpad_3_BTN.clicked.connect(lambda: self.keystroke('3'))
+		self.ui.numpad_4_BTN.clicked.connect(lambda: self.keystroke('4'))
+		self.ui.numpad_5_BTN.clicked.connect(lambda: self.keystroke('5'))
+		self.ui.numpad_6_BTN.clicked.connect(lambda: self.keystroke('6'))
+		self.ui.numpad_7_BTN.clicked.connect(lambda: self.keystroke('7'))
+		self.ui.numpad_8_BTN.clicked.connect(lambda: self.keystroke('8'))
+		self.ui.numpad_9_BTN.clicked.connect(lambda: self.keystroke('9'))
+		self.ui.numpad_delete_BTN.clicked.connect(lambda: self.keystroke('backspace'))
+		self.ui.numpad_komma_BTN.clicked.connect(lambda: self.keystroke('.'))
 
 		# ~~~~~~~~~~~~~~~~
 		# TAB : Controller
