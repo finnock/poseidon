@@ -122,9 +122,9 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 		self.grey_out_components()
 
 		# Declaring start, mid, and end marker for sending code to Arduino
-		self.startMarker = 60# <
-		self.endMarker = 62  # ,F,0.0>
-		self.midMarker = 44 # ,
+		self.startMarker = 60	# <
+		self.endMarker = 62  	# ,F,0.0>
+		self.midMarker = 44 	# ,
 
 		# Initializing multithreading to allow parallel operations
 		self.threadpool = QtCore.QThreadPool()
