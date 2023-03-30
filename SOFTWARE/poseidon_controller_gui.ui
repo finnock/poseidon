@@ -685,7 +685,7 @@
                  </sizepolicy>
                 </property>
                 <property name="text">
-                 <string>Pause</string>
+                 <string>PS</string>
                 </property>
                </widget>
               </item>
