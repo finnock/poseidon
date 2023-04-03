@@ -5,6 +5,7 @@ import glob
 import sys
 from datetime import datetime
 import os
+
 # This gets the Qt stuff
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog
@@ -34,6 +35,8 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
     # INITIALIZING : The UI and setting some needed variables
     # =======================================================
     def __init__(self):
+        # creating Arduino connection object
+        self.arduino = Arduino()
 
         # Setting the UI to a class variable and connecting all GUI Components
         super(MainWindow, self).__init__()
@@ -55,13 +58,6 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.connect_all_gui_components()
         self.grey_out_components()
 
-        # creating Arduino connection object
-        self.arduino = Arduino()
-
-        # Declaring start, mid, and end marker for sending code to Arduino
-        self.startMarker = 60	# <
-        self.endMarker = 62  	# ,F,0.0>
-        self.midMarker = 44 	# ,
 
         # Initializing multithreading to allow parallel operations
         self.threadpool = QtCore.QThreadPool()
@@ -188,13 +184,13 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.ui.save_settings_BTN_2.clicked.connect(self.save_settings)
 
         # Toggle Fullscreen Mode
-
         self.ui.toggle_fullscreen_BTN.clicked.connect(self.toggle_fullscreen)
 
         # Px syringe size, populate then connect (population done earlier)
         self.ui.p1_syringe_DROPDOWN.currentIndexChanged.connect(self.set_p1_syringe)
         self.ui.p2_syringe_DROPDOWN.currentIndexChanged.connect(self.set_p2_syringe)
         self.ui.p3_syringe_DROPDOWN.currentIndexChanged.connect(self.set_p3_syringe)
+
         # warning to send the info to the controller
         self.ui.p1_syringe_DROPDOWN.currentIndexChanged.connect(self.send_p1_warning)
         self.ui.p2_syringe_DROPDOWN.currentIndexChanged.connect(self.send_p2_warning)
@@ -204,6 +200,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.ui.p1_units_DROPDOWN.currentIndexChanged.connect(self.set_p1_units)
         self.ui.p2_units_DROPDOWN.currentIndexChanged.connect(self.set_p2_units)
         self.ui.p3_units_DROPDOWN.currentIndexChanged.connect(self.set_p3_units)
+
         # warning to send the info to the controller
         self.ui.p1_units_DROPDOWN.currentIndexChanged.connect(self.send_p1_warning)
         self.ui.p2_units_DROPDOWN.currentIndexChanged.connect(self.send_p2_warning)
@@ -213,6 +210,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.ui.p1_speed_INPUT.valueChanged.connect(self.set_p1_speed)
         self.ui.p2_speed_INPUT.valueChanged.connect(self.set_p2_speed)
         self.ui.p3_speed_INPUT.valueChanged.connect(self.set_p3_speed)
+
         # warning to send the info to the controller
         self.ui.p1_speed_INPUT.valueChanged.connect(self.send_p1_warning)
         self.ui.p2_speed_INPUT.valueChanged.connect(self.send_p2_warning)
@@ -222,6 +220,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.ui.p1_accel_INPUT.valueChanged.connect(self.set_p1_accel)
         self.ui.p2_accel_INPUT.valueChanged.connect(self.set_p2_accel)
         self.ui.p3_accel_INPUT.valueChanged.connect(self.set_p3_accel)
+
         # warning to send the info to the controller
         self.ui.p1_accel_INPUT.valueChanged.connect(self.send_p1_warning)
         self.ui.p2_accel_INPUT.valueChanged.connect(self.send_p2_warning)
@@ -231,16 +230,17 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.ui.p1_setup_jog_delta_INPUT.currentIndexChanged.connect(self.set_p1_setup_jog_delta)
         self.ui.p2_setup_jog_delta_INPUT.currentIndexChanged.connect(self.set_p2_setup_jog_delta)
         self.ui.p3_setup_jog_delta_INPUT.currentIndexChanged.connect(self.set_p3_setup_jog_delta)
+
         # warning to send the info to the contorller
         self.ui.p1_setup_jog_delta_INPUT.currentIndexChanged.connect(self.send_p1_warning)
         self.ui.p2_setup_jog_delta_INPUT.currentIndexChanged.connect(self.send_p2_warning)
         self.ui.p3_setup_jog_delta_INPUT.currentIndexChanged.connect(self.send_p3_warning)
 
-
         # Px send settings
         self.ui.p1_setup_send_BTN.clicked.connect(self.send_p1_settings)
         self.ui.p2_setup_send_BTN.clicked.connect(self.send_p2_settings)
         self.ui.p3_setup_send_BTN.clicked.connect(self.send_p3_settings)
+
         # remove warning to send settings
         self.ui.p1_setup_send_BTN.clicked.connect(self.send_p1_success)
         self.ui.p2_setup_send_BTN.clicked.connect(self.send_p2_success)
@@ -468,6 +468,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         print("STOP command sent.")
 
     def jog(self, btn):
+        print(f"Main> Jog Command. Forward To Syringe Channel Object")
         self.syringe_channel_1.jog(FORWARD)
         # self.statusBar().showMessage("You clicked JOG")
         # #self.serial.flushInput()
@@ -978,9 +979,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.settings.append("<SETTING,DELTA,3,"+str(self.p3_setup_jog_delta_to_send)+",F,0.0,0.0,0.0>")
 
         print("Sending all settings..")
-        thread = Thread(self.runTest, self.settings)
-        thread.finished.connect(lambda:self.thread_finished(thread))
-        thread.start()
+        self.arduino.thread_send_commands(self.settings)
 
         self.ui.p1_setup_send_BTN.setStyleSheet("background-color: none")
         self.ui.p2_setup_send_BTN.setStyleSheet("background-color: none")
@@ -1161,86 +1160,9 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 
 
 
-    #====================================== Reading and Writing to Arduino
 
-    def sendToArduino(self, sendStr):
-        self.serial.write(sendStr.encode())
-        self.serial.flushInput()
-
-
-    def recvPositionArduino(self):
-        startMarker = self.startMarker
-        midMarker = self.midMarker
-        endMarker = self.endMarker
-
-        ck = ""
-        x = "z" # any value that is not an end- or startMarker
-
-        # wait for the start character
-        while  ord(x) != startMarker:
-            x = self.serial.read()
-
-        # save data until the end marker is found
-        while ord(x) != endMarker:
-            if ord(x) == midMarker:
-                print(ck)
-                self.ui.p1_absolute_DISP.display(ck)
-                ck = ""
-                x = self.serial.read()
-
-            if ord(x) != startMarker:
-            #print(x)
-                ck = ck + x.decode()
-
-            x = self.serial.read()
-
-        return(ck)
 
     #============================
-
-
-    def runTest(self, td):
-        numLoops = len(td)
-        waitingForReply = False
-        n = 0
-
-        while n < numLoops:
-            teststr = td[n]
-
-            if waitingForReply == False:
-                self.sendToArduino(teststr)
-                print("Sent from PC -- " + teststr)
-                waitingForReply = True
-
-            if waitingForReply == True:
-
-                while self.serial.inWaiting() == 0:
-                    pass
-
-                dataRecvd = self.recvPositionArduino()
-                print("Reply Received -- " + dataRecvd)
-                n += 1
-                waitingForReply = False
-
-
-            time.sleep(0.1)
-        print("Send and receive complete\n\n")
-
-    def send_single_command(self, command):
-        waiting_for_reply = False
-        if waiting_for_reply == False:
-            self.sendToArduino(command)
-            print("Sent from PC -- STR " + command)
-            waiting_for_reply = True
-        if waiting_for_reply == True:
-            while self.serial.inWaiting() == 0:
-                pass
-            #data_received = self.recvFromArduino2()
-            data_received = "from other func"
-            print("Reply Received -- " + data_received)
-            waiting_for_reply = False
-            print("=============================\n\n")
-            print("Sent a single command")
 
 
     def listening(self):

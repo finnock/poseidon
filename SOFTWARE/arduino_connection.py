@@ -1,5 +1,6 @@
 import serial
 import time
+from thread import Thread
 
 
 class CannotConnectException(Exception):
@@ -8,6 +9,11 @@ class CannotConnectException(Exception):
 
 class Arduino:
     def __init__(self):
+        # Declaring start, mid, and end marker for sending code to Arduino
+        self.START_MARKER = 60   # <
+        self.END_MARKER = 62  	# ,F,0.0>
+        self.MID_MARKER = 44 	# ,
+
         self.port = None
         self.serial = None
         self.connected = False
@@ -47,33 +53,67 @@ class Arduino:
     # Disconnect from the Arduino board
     # TODO: figure out how to handle error.. (which error?)
     def disconnect(self):
-        print("Disconnecting from board..")
+        print("Arduino> Disconnecting from board..")
         #self.global_listener_thread.stop()
         time.sleep(3)
         self.serial.close()
         self.connected = False
-        print("Board has been disconnected")
+        print("Arduino> Board has been disconnected")
 
     def send_commands(self, commands):
-        waiting_for_reply = False
+        thread = Thread(self.send_commands_helper, commands)
+        thread.finished.connect(lambda: self.thread_finished_helper(thread))
+        thread.start()
 
+    def send_commands_helper(self, commands):
         for command in commands:
-            if not waiting_for_reply:
-                self.send_to_arduino(command)
-                print("Sent from PC -- " + command)
-                waiting_for_reply = True
+            # Send the command via the serial connection
+            self.serial.write(command.encode())
+            self.serial.flushInput()
+            print("Arduino> Send Command: " + command)
 
-            if waiting_for_reply:
-                while self.serial.inWaiting() == 0:
-                    pass
+            # Wait for reply
+            while self.serial.inWaiting() == 0:
+                pass
 
-                data_received = self.main.recvPositionArduino()
-                print("Reply Received -- " + data_received)
-                waiting_for_reply = False
+            # Receive data via serial connection
+            data_received = self.receive_position_arduino()
+            print("Arduino> Receive Reply: " + data_received)
 
+            # Short sleep time for serial connection to reset
             time.sleep(0.1)
-        print("Send and receive complete\n\n")
 
-    def send_to_arduino(self, command):
-        self.serial.write(command.encode())
-        self.serial.flushInput()
+        print("Arduino> Send and receive complete\n\n")
+
+    def thread_finished_helper(self, thread):
+        thread.stop()
+        print(f"Arduino> Thread finished")
+
+    def send_manual_arduino_command(self, operation, operation_type, motors, value, direction, steps):
+        command = f"<{operation},{operation_type},{motors},{value},{direction},{steps[0]},{steps[1]},{steps[2]}>"
+        print(f"Arduino> Executing: {command}")
+        self.send_commands([command])
+
+    def receive_position_arduino(self):
+        result = ""
+        current_marker = None  # any value that is not an end- or startMarker
+
+        # wait for the start character
+        while ord(current_marker) != self.START_MARKER:
+            current_marker = self.serial.read()
+
+        # save data until the end marker is found
+        while ord(current_marker) != self.END_MARKER:
+            if ord(current_marker) == self.MID_MARKER:
+                # print(f"Arduino> Receive Position Midmarker: {result}")
+                # self.ui.p1_absolute_DISP.display(result)
+                # TODO move to UI
+                result = ""
+                current_marker = self.serial.read()
+
+            if ord(current_marker) != self.START_MARKER:
+                # print(current_marker)
+                result = result + current_marker.decode()
+
+            current_marker = self.serial.read()
+        return (result)

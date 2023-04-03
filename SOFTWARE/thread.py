@@ -1,9 +1,11 @@
-from PyQt5 import QtCore, QtGui, QtWidgets
-import traceback, sys
+import sys
+import traceback
+
+from PyQt5 import QtCore
 
 
 class WorkerSignals(QtCore.QObject):
-    '''
+    """
     Defines the signals available from a running worker thread.
 
     Supported signals are:
@@ -16,12 +18,12 @@ class WorkerSignals(QtCore.QObject):
 
     result
         `object` data returned from processing, anything
-
-    '''
+    """
     finished = QtCore.pyqtSignal()
     error = QtCore.pyqtSignal(tuple)
     result = QtCore.pyqtSignal(object)
     progress = QtCore.pyqtSignal(int)
+
 
 class Thread(QtCore.QThread):
     def __init__(self, fn, *args, **kwargs):
@@ -35,8 +37,8 @@ class Thread(QtCore.QThread):
 
     def run(self):
         try:
-            #self.serial.flushInput()
-            #self.serial.flushOutput()
+            # self.serial.flushInput()
+            # self.serial.flushOutput()
             result = self.fn(*self.args, **self.kwargs)
         except:
             traceback.print_exc()
@@ -48,7 +50,7 @@ class Thread(QtCore.QThread):
             self.signals.finished.emit()  # Done
             self.stop()
 
-            print("Job completed")
+            print("Thread> Job completed")
 
     def stop(self):
         self.runs = False
