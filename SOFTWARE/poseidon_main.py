@@ -1,97 +1,29 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import serial
-import time
 import glob
 import sys
 from datetime import datetime
-import time
 import os
 # This gets the Qt stuff
-
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog
 import pyautogui
 
-import cv2
-# note, had to use version 3.2.0.8 otherwise it had its own
-# pyqt packages that conflicted with mine
-
 import numpy as np
 from decimal import Decimal
+
 # This is our window from QtCreator
 import poseidon_controller_gui
-import pdb
+
 import traceback, sys
-
-# ##############################
-# MULTITHREADING : SIGNALS CLASS
-# ##############################
-class WorkerSignals(QtCore.QObject):
-    '''
-    Defines the signals available from a running worker thread.
-
-    Supported signals are:
-
-    finished
-        No data
-
-    error
-        `tuple` (exctype, value, traceback.format_exc() )
-
-    result
-        `object` data returned from processing, anything
-
-    '''
-    finished = QtCore.pyqtSignal()
-    error = QtCore.pyqtSignal(tuple)
-    result = QtCore.pyqtSignal(object)
-    progress = QtCore.pyqtSignal(int)
-
-# #############################
-# MULTITHREADING : WORKER CLASS
-# #############################
-
-
-class Thread(QtCore.QThread):
-    def __init__(self, fn, *args, **kwargs):
-        parent = None
-        super(Thread, self).__init__(parent)
-        self.runs = True
-        self.fn = fn
-        self.args = args
-        self.kwargs = kwargs
-        self.signals = WorkerSignals()
-
-    def run(self):
-        try:
-            #self.serial.flushInput()
-            #self.serial.flushOutput()
-            result = self.fn(*self.args, **self.kwargs)
-        except:
-            traceback.print_exc()
-            exctype, value = sys.exc_info()[:2]
-            self.signals.error.emit((exctype, value, traceback.format_exc()))
-        else:
-            self.signals.result.emit(result)  # Return the result of the processing
-        finally:
-            self.signals.finished.emit()  # Done
-            self.stop()
-
-            print("Job completed")
-
-    def stop(self):
-        self.runs = False
-
-
-
+from thread import Thread
+from syringe_channel import *
+from arduino_connection import Arduino, CannotConnectException
 
 # #####################################
 # ERROR HANDLING : CANNOT CONNECT CLASS
 # #####################################
-class CannotConnectException(Exception):
-    pass
 
 # #######################
 # GUI : MAIN WINDOW CLASS
@@ -117,10 +49,14 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.populate_ports()
         self.set_port()
 
-
+        # Set up Syringe Channels
+        self.syringe_channel_1 = SyringeChannel(self, 1)
 
         self.connect_all_gui_components()
         self.grey_out_components()
+
+        # creating Arduino connection object
+        self.arduino = Arduino()
 
         # Declaring start, mid, and end marker for sending code to Arduino
         self.startMarker = 60	# <
@@ -132,21 +68,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
 
 
-        # Camera setup
-        self.timer = QtCore.QTimer()
-        self.timer.setInterval(1000)
-        self.timer.timeout.connect(self.recurring_timer)
-        self.timer.start()
-        self.counter = 0
 
-        # Random other things I need
-        self.image = None
-        #self.microstepping = 1
-        #print(self.microstepping)
-
-
-    def recurring_timer(self):
-        self.counter +=1
 
     # =============================
     # SETTING : important variables
@@ -156,12 +78,6 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.set_p1_syringe()
         self.set_p2_syringe()
         self.set_p3_syringe()
-
-
-
-        #self.set_p1_units()
-        #self.set_p2_units()
-        #self.set_p3_units()
 
         self.is_p1_active = False
         self.is_p2_active = False
@@ -238,15 +154,11 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 
         # Action buttons
         self.ui.run_BTN.clicked.connect(self.run)
-
-
         self.ui.pause_BTN.clicked.connect(self.pause)
-
-
         self.ui.zero_BTN.clicked.connect(self.zero)
         self.ui.stop_BTN.clicked.connect(self.stop)
 
-
+        # Jog Buttons
         self.ui.jog_plus_BTN.clicked.connect(lambda:self.jog(self.ui.jog_plus_BTN))
         self.ui.jog_minus_BTN.clicked.connect(lambda:self.jog(self.ui.jog_minus_BTN))
 
@@ -335,8 +247,8 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.ui.p3_setup_send_BTN.clicked.connect(self.send_p3_success)
 
         # Connect to arduino
-        self.ui.connect_BTN.clicked.connect(self.connect)
-        self.ui.disconnect_BTN.clicked.connect(self.disconnect)
+        self.ui.connect_BTN.clicked.connect(self.click_connect_button)
+        self.ui.disconnect_BTN.clicked.connect(self.click_disconnect_button)
 
         # Send all the settings at once
         self.ui.send_all_BTN.clicked.connect(self.send_all)
@@ -430,23 +342,29 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 
     def display_p1_syringe(self):
         self.ui.p1_syringe_LABEL.setText(self.ui.p1_syringe_DROPDOWN.currentText())
+
     def display_p2_syringe(self):
         self.ui.p2_syringe_LABEL.setText(self.ui.p2_syringe_DROPDOWN.currentText())
+
     def display_p3_syringe(self):
         self.ui.p3_syringe_LABEL.setText(self.ui.p3_syringe_DROPDOWN.currentText())
 
     def display_p1_speed(self):
         self.ui.p1_units_LABEL.setText(str(self.p1_speed) + " " + self.ui.p1_units_DROPDOWN.currentText())
+
     def display_p2_speed(self):
         self.ui.p2_units_LABEL.setText(str(self.p2_speed) + " " + self.ui.p2_units_DROPDOWN.currentText())
+
     def display_p3_speed(self):
         self.ui.p3_units_LABEL.setText(str(self.p3_speed) + " " + self.ui.p3_units_DROPDOWN.currentText())
 
     # Set Px distance to move
     def set_p1_amount(self):
         self.p1_amount = self.ui.p1_amount_INPUT.value()
+
     def set_p2_amount(self):
         self.p2_amount = self.ui.p2_amount_INPUT.value()
+
     def set_p3_amount(self):
         self.p3_amount = self.ui.p3_amount_INPUT.value()
 
@@ -550,105 +468,79 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         print("STOP command sent.")
 
     def jog(self, btn):
-        self.statusBar().showMessage("You clicked JOG")
-        #self.serial.flushInput()
-        testData = []
-        active_pumps = self.get_active_pumps()
-        if len(active_pumps) > 0:
-            pumps_2_run = ''.join(map(str,active_pumps))
-
-            one_jog = str(self.p1_setup_jog_delta_to_send)
-            two_jog = str(self.p2_setup_jog_delta_to_send)
-            three_jog = str(self.p3_setup_jog_delta_to_send)
-
-            if btn.text() == "Jog +":
-                self.statusBar().showMessage("You clicked JOG +")
-                f_cmd = "<RUN,DIST," + pumps_2_run +",0,F," + one_jog + "," + two_jog + "," + three_jog + ">"
-                testData.append(f_cmd)
-
-                print("Sending JOG command..")
-
-                thread = Thread(self.runTest, testData)
-                thread.finished.connect(lambda:self.thread_finished(thread))
-                thread.start()
-                print("JOG command sent.")
-
-            elif btn.text() == "Jog -":
-                self.statusBar().showMessage("You clicked JOG -")
-                b_cmd = "<RUN,DIST," + pumps_2_run +",0,B," + one_jog + "," + two_jog + "," + three_jog + ">"
-                testData.append(b_cmd)
-
-                print("Sending JOG command..")
-                thread = Thread(self.runTest, testData)
-                thread.finished.connect(lambda:self.thread_finished(thread))
-                thread.start()
-                print("JOG command sent.")
-        else:
-            self.statusBar().showMessage("No pumps enabled.")
-
-    # ======================
-    # FUNCTIONS : Camera
-    # ======================
-
-    # Initialize the camera
-    def start_camera(self):
-        self.statusBar().showMessage("You clicked START CAMERA")
-        camera_port = 0
-        self.capture = cv2.VideoCapture(camera_port)
-        #TODO check the native resolution of the camera and scale the size down here
-        self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 800)
-        self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, 400)
-
-        self.timer = QtCore.QTimer(self)
-        self.timer.timeout.connect(self.update_frame)
-        self.timer.start(5)
-
-    # Update frame function
-    def update_frame(self):
-        ret, self.image = self.capture.read()
-        self.image = cv2.flip(self.image, 1)
-        self.display_image(self.image, 1)
-
-    # Display image in frame
-    def display_image(self, image, window=1):
-        qformat = QtGui.QImage.Format_Indexed8
-        if len(image.shape) == 3: #
-            if image.shape[2] == 4:
-                qformat = QtGui.QImage.Format_RGBA8888
-
-            else:
-                qformat = QtGui.QImage.Format_RGB888
-                #print(image.shape[0], image.shape[1], image.shape[2])
-        self.img_2_display = QtGui.QImage(image, image.shape[1], image.shape[0], image.strides[0], qformat)
-        self.img_2_display = QtGui.QImage.rgbSwapped(self.img_2_display)
-
-        if window == 1:
-            self.ui.imgLabel.setPixmap(QtGui.QPixmap.fromImage(self.img_2_display))
-            self.ui.imgLabel.setScaledContents(False)
-
-    # Save image to set location
-    def save_image(self):
-        if not os.path.exists("./images"):
-            os.mkdir("images")
-
-        self.date_string =  datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        # Replace semicolons with underscores
-        self.date_string = self.date_string.replace(":","_")
-        self.write_image_loc = './images/'+self.date_string + '.png'
-        cv2.imwrite(self.write_image_loc, self.image)
-        self.statusBar().showMessage("Captured Image, saved to: " + self.write_image_loc)
-
-
-    # Stop camera
-    def stop_camera(self):
-        self.timer.stop()
+        self.syringe_channel_1.jog(FORWARD)
+        # self.statusBar().showMessage("You clicked JOG")
+        # #self.serial.flushInput()
+        # testData = []
+        # active_pumps = self.get_active_pumps()
+        # if len(active_pumps) > 0:
+        #     pumps_2_run = ''.join(map(str,active_pumps))
+        #
+        #     one_jog = str(self.p1_setup_jog_delta_to_send)
+        #     two_jog = str(self.p2_setup_jog_delta_to_send)
+        #     three_jog = str(self.p3_setup_jog_delta_to_send)
+        #
+        #     if btn.text() == "Jog +":
+        #         self.statusBar().showMessage("You clicked JOG +")
+        #         f_cmd = "<RUN,DIST," + pumps_2_run +",0,F," + one_jog + "," + two_jog + "," + three_jog + ">"
+        #         testData.append(f_cmd)
+        #
+        #         print("Sending JOG command..")
+        #
+        #         thread = Thread(self.runTest, testData)
+        #         thread.finished.connect(lambda:self.thread_finished(thread))
+        #         thread.start()
+        #         print("JOG command sent.")
+        #
+        #     elif btn.text() == "Jog -":
+        #         self.statusBar().showMessage("You clicked JOG -")
+        #         b_cmd = "<RUN,DIST," + pumps_2_run +",0,B," + one_jog + "," + two_jog + "," + three_jog + ">"
+        #         testData.append(b_cmd)
+        #
+        #         print("Sending JOG command..")
+        #         thread = Thread(self.runTest, testData)
+        #         thread.finished.connect(lambda:self.thread_finished(thread))
+        #         thread.start()
+        #         print("JOG command sent.")
+        # else:
+        #     self.statusBar().showMessage("No pumps enabled.")
 
     # ======================
     # FUNCTIONS : Setup
     # ======================
 
+    def click_connect_button(self):
+        self.statusBar().showMessage("You clicked CONNECT TO CONTROLLER")
+
+        try:
+            self.arduino.connect()
+        except AttributeError:
+            self.statusBar().showMessage("Please plug in the board and select a proper port, then press connect.")
+        except CannotConnectException:
+            self.statusBar().showMessage("Cannot connect to board. Try again..")
+
+        self.statusBar().showMessage("Successfully connected to board.")
+
+        # Change UI Button states accordingly
+        self.ui.disconnect_BTN.setEnabled(True)
+        self.ui.p1_setup_send_BTN.setEnabled(True)
+        self.ui.p2_setup_send_BTN.setEnabled(True)
+        self.ui.p3_setup_send_BTN.setEnabled(True)
+        self.ui.send_all_BTN.setEnabled(True)
+        self.ui.connect_BTN.setEnabled(False)
+
+    def click_disconnect_button(self):
+        self.statusBar().showMessage("You clicked DISCONNECT FROM BOARD")
+
+        self.arduino.disconnect()
+
+        self.grey_out_components()
+        self.ui.connect_BTN.setEnabled(True)
+        self.ui.disconnect_BTN.setEnabled(False)
+
+
     # Populate the available ports
+    # TODO: can this be moved to arduino file?
     def populate_ports(self):
         """
             :raises EnvironmentError:
@@ -679,6 +571,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         print("Ports have been populated.")
 
     # Refresh the list of ports
+    # TODO: can this be moved to arduino file?
     def refresh_ports(self):
         self.statusBar().showMessage("You clicked REFRESH PORTS")
         self.ui.port_DROPDOWN.clear()
@@ -686,8 +579,9 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.set_port()
 
     # Set the port that is selected from the dropdown menu
+    # TODO: find usage, move to arduino file
     def set_port(self):
-        self.port = self.ui.port_DROPDOWN.currentText()
+        self.arduino.port = self.ui.port_DROPDOWN.currentText()
 
     # Set the microstepping amount from the dropdown menu
     # TODO: There is definitely a better way of updating different variables
@@ -1065,64 +959,6 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         thread.finished.connect(lambda:self.thread_finished(thread))
         thread.start()
         print("P3 SETTINGS sent.")
-
-    # Connect to the Arduino board
-    def connect(self):
-        #self.port_nano = '/dev/cu.usbserial-A9M11B77'
-        #self.port_uno = "/dev/cu.usbmodem1411"
-        #self.baudrate = baudrate
-        self.statusBar().showMessage("You clicked CONNECT TO CONTROLLER")
-        try:
-            port_declared = self.port in vars()
-            try:
-                self.serial = serial.Serial()
-                self.serial.port = self.port
-                self.serial.baudrate = 230400
-                self.serial.parity = serial.PARITY_NONE
-                self.serial.stopbits = serial.STOPBITS_ONE
-                self.serial.bytesize = serial.EIGHTBITS
-                self.serial.timeout = 1
-                self.serial.open()
-                #self.serial.flushInput()
-
-                # This is a thread that always runs and listens to commands from the Arduino
-                #self.global_listener_thread = Thread(self.listening)
-                #self.global_listener_thread.finished.connect(lambda:self.self.thread_finished(self.global_listener_thread))
-                #self.global_listener_thread.start()
-
-                # ~~~~~~~~~~~~~~~~
-                # TAB : Setup
-                # ~~~~~~~~~~~~~~~~
-                self.ui.disconnect_BTN.setEnabled(True)
-                self.ui.p1_setup_send_BTN.setEnabled(True)
-                self.ui.p2_setup_send_BTN.setEnabled(True)
-                self.ui.p3_setup_send_BTN.setEnabled(True)
-                self.ui.send_all_BTN.setEnabled(True)
-
-                self.ui.connect_BTN.setEnabled(False)
-                time.sleep(3)
-                self.statusBar().showMessage("Successfully connected to board.")
-            except:
-                self.statusBar().showMessage("Cannot connect to board. Try again..")
-                raise CannotConnectException
-        except AttributeError:
-            self.statusBar().showMessage("Please plug in the board and select a proper port, then press connect.")
-
-
-
-    # Disconnect from the Arduino board
-    # TODO: figure out how to handle error..
-    def disconnect(self):
-        self.statusBar().showMessage("You clicked DISCONNECT FROM BOARD")
-        print("Disconnecting from board..")
-        #self.global_listener_thread.stop()
-        time.sleep(3)
-        self.serial.close()
-        print("Board has been disconnected")
-
-        self.grey_out_components()
-        self.ui.connect_BTN.setEnabled(True)
-        self.ui.disconnect_BTN.setEnabled(False)
 
     # Send all settings
     def send_all(self):
