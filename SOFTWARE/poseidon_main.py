@@ -979,7 +979,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.settings.append("<SETTING,DELTA,3,"+str(self.p3_setup_jog_delta_to_send)+",F,0.0,0.0,0.0>")
 
         print("Sending all settings..")
-        self.arduino.thread_send_commands(self.settings)
+        self.arduino.send_commands(self.settings)
 
         self.ui.p1_setup_send_BTN.setStyleSheet("background-color: none")
         self.ui.p2_setup_send_BTN.setStyleSheet("background-color: none")

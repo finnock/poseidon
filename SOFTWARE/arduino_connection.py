@@ -10,18 +10,21 @@ class CannotConnectException(Exception):
 class Arduino:
     def __init__(self):
         # Declaring start, mid, and end marker for sending code to Arduino
-        self.START_MARKER = 60   # <
-        self.END_MARKER = 62  	# ,F,0.0>
+        self.START_MARKER = 60  # <
         self.MID_MARKER = 44 	# ,
+        self.END_MARKER = 62    # >
 
         self.port = None
         self.serial = None
         self.connected = False
 
+        self.steps = None
+        self.steps_per_mm = None
+
     # Connect to the Arduino Board
     def connect(self):
         try:
-            port_declared = self.port in vars()
+            self.port in vars()
             try:
                 self.serial = serial.Serial()
                 self.serial.port = self.port
@@ -31,6 +34,8 @@ class Arduino:
                 self.serial.bytesize = serial.EIGHTBITS
                 self.serial.timeout = 1
                 self.serial.open()
+
+                print(f"Arduino> Connect to port: {self.port}")
 
                 # This is a thread that always runs and listens to commands from the Arduino
                 # TODO: figure out how this is usable! Sounds good!
@@ -96,24 +101,47 @@ class Arduino:
 
     def receive_position_arduino(self):
         result = ""
-        current_marker = None  # any value that is not an end- or startMarker
+        current_character = "X"  # any value that is not an end- or startMarker
 
         # wait for the start character
-        while ord(current_marker) != self.START_MARKER:
-            current_marker = self.serial.read()
+        while ord(current_character) != self.START_MARKER:
+            current_character = self.serial.read()
+            result += current_character.decode()
 
         # save data until the end marker is found
-        while ord(current_marker) != self.END_MARKER:
-            if ord(current_marker) == self.MID_MARKER:
+        while ord(current_character) != self.END_MARKER:
+            if ord(current_character) == self.MID_MARKER:
                 # print(f"Arduino> Receive Position Midmarker: {result}")
                 # self.ui.p1_absolute_DISP.display(result)
                 # TODO move to UI
-                result = ""
-                current_marker = self.serial.read()
+                # result = ""
+                current_character = self.serial.read()
+                result += current_character.decode()
 
-            if ord(current_marker) != self.START_MARKER:
-                # print(current_marker)
-                result = result + current_marker.decode()
+            if ord(current_character) != self.START_MARKER:
+                # print(current_character)
+                result += current_character.decode()
 
-            current_marker = self.serial.read()
+            current_character = self.serial.read()
         return (result)
+
+    # #########################################################
+    # Hardware Abstraction Functions
+    #
+    # Expose motor functionality to software on API level
+    # #########################################################
+
+    def jog(self, motor_channel, direction, distance):
+        """ Jogs the given channel in a given direction and distance
+
+        Parameters
+        ----------
+        motor_channel : int
+            The channel which should be manipulated (1..3)
+        direction : int
+            The direction in which the motor should be moved. 1 for FORWARD, 0 for BACKWARD.
+        distance : float
+            The distance by which the motor should be moved, given in mm.
+        """
+
+        # Calculate the number of steps required to move by the given distance.

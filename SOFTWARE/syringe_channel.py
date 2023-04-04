@@ -13,4 +13,4 @@ class SyringeChannel:
 
     def jog(self, direction):
         print(f"SyringeChannel> Send Test Jog Command")
-        self.main.arduino.send_arduino_command('RUN', 'DIST', 1, 0, direction, [8000, 8000, 8000])
+        self.main.arduino.send_manual_arduino_command('RUN', 'DIST', 1, 0, direction, [8000, 8000, 8000])
