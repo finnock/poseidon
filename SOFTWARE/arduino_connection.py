@@ -39,9 +39,9 @@ class Arduino:
 
                 # This is a thread that always runs and listens to commands from the Arduino
                 # TODO: figure out how this is usable! Sounds good!
-                #self.global_listener_thread = Thread(self.listening)
-                #self.global_listener_thread.finished.connect(lambda:self.self.thread_finished(self.global_listener_thread))
-                #self.global_listener_thread.start()
+                self.global_listener_thread = Thread(self.serial_listener)
+                self.global_listener_thread.finished.connect(lambda:self.thread_finished(self.global_listener_thread))
+                self.global_listener_thread.start()
 
 
                 # TODO: figure out if 3s is necessary
@@ -77,14 +77,6 @@ class Arduino:
             self.serial.flushInput()
             print("Arduino> Send Command: " + command)
 
-            # Wait for reply
-            while self.serial.inWaiting() == 0:
-                pass
-
-            # Receive data via serial connection
-            data_received = self.receive_position_arduino()
-            print("Arduino> Receive Reply: " + data_received)
-
             # Short sleep time for serial connection to reset
             time.sleep(0.1)
 
@@ -99,31 +91,12 @@ class Arduino:
         print(f"Arduino> Executing: {command}")
         self.send_commands([command])
 
-    def receive_position_arduino(self):
-        result = ""
-        current_character = "X"  # any value that is not an end- or startMarker
+    def serial_listener(self):
+        while True:
+            line = self.serial.readline()
+            if len(line) > 0:
+                print(line.decode('ascii').replace('\r\n', ''))
 
-        # wait for the start character
-        while ord(current_character) != self.START_MARKER:
-            current_character = self.serial.read()
-            result += current_character.decode()
-
-        # save data until the end marker is found
-        while ord(current_character) != self.END_MARKER:
-            if ord(current_character) == self.MID_MARKER:
-                # print(f"Arduino> Receive Position Midmarker: {result}")
-                # self.ui.p1_absolute_DISP.display(result)
-                # TODO move to UI
-                # result = ""
-                current_character = self.serial.read()
-                result += current_character.decode()
-
-            if ord(current_character) != self.START_MARKER:
-                # print(current_character)
-                result += current_character.decode()
-
-            current_character = self.serial.read()
-        return (result)
 
     # #########################################################
     # Hardware Abstraction Functions

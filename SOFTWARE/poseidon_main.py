@@ -1165,55 +1165,6 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
     #============================
 
 
-    def listening(self):
-        startMarker = self.startMarker
-        midMarker = self.midMarker
-        endMarker = self.endMarker
-        posMarker = ord('?')
-        i = 0
-
-        while (True):
-            self.serial.flushInput()
-            x = "z"
-            ck = ""
-            isDisplay = "asdf"
-            while self.serial.inWaiting() == 0:
-                pass
-            while  not x or ord(x) != startMarker:
-                x = self.serial.read()
-                #if ord(x) == posMarker:
-                #	return self.get_position()
-            while ord(x) != endMarker:
-                if ord(x) == midMarker:
-                    i += 1
-                    print(ck)
-                    #isDisplay = ck
-                    #if i % 100 == 0:
-                    #	self.ui.p1_absolute_DISP.display(ck)
-                    ck = ""
-                    x = self.serial.read()
-
-                if ord(x) != startMarker:
-                    ck = ck + x.decode()
-
-                x = self.serial.read()
-                # TODO
-            #if isDisplay == "START":
-            #	print("This is ck: " + ck)
-                #motorID = int(ck)
-                #self.is_p1_running = True
-                #run thread(self.display_position, motorID)
-
-                #toDisp = self.steps2mm(float(ck))
-                #print("Pump num " + toDisp + " is now running.")i
-                #self.ui.p1_absolute_DISP.display(toDisp)
-                #isDisplay = ""
-
-            #self.serial.flushInput()
-            #print(self.serial.read(self.serial.inWaiting()).decode('ascii'))
-            print(ck)
-            print("\n")
-
     # TODO
     # def display_position(self, motorID):
     # 	if motorID == 1:
