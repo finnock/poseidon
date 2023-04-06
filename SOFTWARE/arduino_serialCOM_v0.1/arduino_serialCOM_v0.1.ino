@@ -479,7 +479,7 @@ void udpateSettings() {
         }
         else if (strcmp(setting, "DELTA") == 0) {
           jog1Delta = value;
-        }
+        }      
         break;
       case 2:
         if (strcmp(setting, "SPEED") == 0) {
