@@ -100,6 +100,7 @@ AccelStepper stepper3(AccelStepper::DRIVER, Z_STP, Z_DIR);
 
 // Now we declare variables we will use throughout our code (That could change!)
 const int ledPin = 13;
+const int ENPin = 8;
 // The buffer allows us to store bytes as they are read from the python program (64 bytes in size)
 const byte buffSize = 64;
 char inputBuffer[buffSize];
@@ -193,7 +194,11 @@ void setup() {
   stepper2.setAcceleration(Y_ACCEL);
   stepper3.setAcceleration(Z_ACCEL);
   // tell the PC we are ready
-  Serial.println("<Arduino is ready>");
+  pinMode(ENPin, OUTPUT);
+  digitalWrite(ENPin, HIGH);
+  Serial.println("EN Pin to HIGH");
+
+  Serial.println("<Arduino Board is ready>");
 
 
 }
@@ -459,43 +464,48 @@ void udpateSettings() {
   stepper2.setCurrentPosition(0.0);
   stepper3.setCurrentPosition(0.0);
 
-  switch (motorID) {
-    case 1:
-      if (strcmp(setting, "SPEED") == 0) {
-        stepper1.setMaxSpeed(value);
-      }
-      else if (strcmp(setting, "ACCEL") == 0) {
-        //stepper1.setAcceleration(value);
-        stepper1.setAcceleration(value);
-      }
-      else if (strcmp(setting, "DELTA") == 0) {
-        jog1Delta = value;
-      }
-      break;
-    case 2:
-      if (strcmp(setting, "SPEED") == 0) {
-        stepper2.setMaxSpeed(value);
-      }
-      else if (strcmp(setting, "ACCEL") == 0) {
-        //stepper2.setAcceleration(value);
-        stepper2.setAcceleration(value);
-      }
-      else if (strcmp(setting, "DELTA") == 0) {
-        jog2Delta = value;
-      }
-      break;
-    case 3:
-      if (strcmp(setting, "SPEED") == 0) {
-        stepper3.setMaxSpeed(value);
-      }
-      else if (strcmp(setting, "ACCEL") == 0) {
-        //stepper3.setAcceleration(value);
-        stepper3.setAcceleration(value);
-      }
-      else if (strcmp(setting, "DELTA") == 0) {
-        jog3Delta = value;
-      }
-      break;
+  if (!strcmp(setting, "ENABLE")) {
+      digitalWrite(ENPin, !value);                // If value = 1 the motors should be enabled. Since LOW (=0) enabled the motors it needs to be inverted
+  }
+  else {
+    switch (motorID) {
+      case 1:
+        if (strcmp(setting, "SPEED") == 0) {
+          stepper1.setMaxSpeed(value);
+        }
+        else if (strcmp(setting, "ACCEL") == 0) {
+          //stepper1.setAcceleration(value);
+          stepper1.setAcceleration(value);
+        }
+        else if (strcmp(setting, "DELTA") == 0) {
+          jog1Delta = value;
+        }
+        break;
+      case 2:
+        if (strcmp(setting, "SPEED") == 0) {
+          stepper2.setMaxSpeed(value);
+        }
+        else if (strcmp(setting, "ACCEL") == 0) {
+          //stepper2.setAcceleration(value);
+          stepper2.setAcceleration(value);
+        }
+        else if (strcmp(setting, "DELTA") == 0) {
+          jog2Delta = value;
+        }
+        break;
+      case 3:
+        if (strcmp(setting, "SPEED") == 0) {
+          stepper3.setMaxSpeed(value);
+        }
+        else if (strcmp(setting, "ACCEL") == 0) {
+          //stepper3.setAcceleration(value);
+          stepper3.setAcceleration(value);
+        }
+        else if (strcmp(setting, "DELTA") == 0) {
+          jog3Delta = value;
+        }
+        break;
+    }
   }
   clearVariables();
 }
