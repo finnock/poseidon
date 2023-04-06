@@ -20,6 +20,8 @@ class Arduino:
 
         self.steps = None
         self.steps_per_mm = None
+        self.motors_enabled = False
+        self.motors_changed = None
 
     # Connect to the Arduino Board
     def connect(self):
@@ -46,7 +48,9 @@ class Arduino:
 
                 # TODO: figure out if 3s is necessary
                 # TODO: possible thread?
-                time.sleep(3)
+                time.sleep(2)
+                self.enable_motors()
+                time.sleep(1)
 
                 self.connected = True
             except:
@@ -117,4 +121,28 @@ class Arduino:
             The distance by which the motor should be moved, given in mm.
         """
 
-        # Calculate the number of steps required to move by the given distance.
+        distances = [0.0, 0.0, 0.0]
+        distances[motor_channel - 1] = distance * 200 * 32
+
+        self.send_manual_arduino_command('RUN', 'DIST', motor_channel, 1, direction, distances)
+
+    def enable_motors(self):
+        """ Enables all motors """
+        self.send_manual_arduino_command('SETTING', 'ENABLE', 1, 1, "F", [0.0, 0.0, 0.0])
+        self.motors_enabled = True
+        self.motors_changed()
+
+    def disable_motors(self):
+        """ Disables all motors """
+        self.send_manual_arduino_command('SETTING', 'ENABLE', 1, 0, "F", [0.0, 0.0, 0.0])
+        self.motors_enabled = False
+        self.motors_changed()
+
+    def toggle_motors(self):
+        """ Toggles all motors """
+        if self.motors_enabled:
+            self.disable_motors()
+        else:
+            self.enable_motors()
+        self.motors_changed()
+

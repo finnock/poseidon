@@ -5,6 +5,7 @@ import glob
 import sys
 from datetime import datetime
 import os
+import serial
 
 # This gets the Qt stuff
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -97,6 +98,13 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
     def connect_all_gui_components(self):
 
         # ~~~~~~~~~~~~~~~
+        # SIDE : CONTROLS
+        # ~~~~~~~~~~~~~~~
+
+        self.arduino.motors_changed = self.motor_state_change
+        self.ui.motor_state_button.clicked.connect(self.toggle_motor_state)
+
+        # ~~~~~~~~~~~~~~~
         # SIDE : NUMPAD
         # ~~~~~~~~~~~~~~~
 
@@ -169,8 +177,6 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         # Port, first populate it then connect it (population done earlier)
         self.ui.refresh_ports_BTN.clicked.connect(self.refresh_ports)
         self.ui.port_DROPDOWN.currentIndexChanged.connect(self.set_port)
-
-        self.ui.experiment_notes.editingFinished.connect(self.set_experiment_notes)
 
         # Set the microstepping value, default is 1
         self.ui.microstepping_DROPDOWN.currentIndexChanged.connect(self.set_microstepping)
@@ -252,6 +258,12 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 
         # Send all the settings at once
         self.ui.send_all_BTN.clicked.connect(self.send_all)
+
+    def motor_state_change(self):
+        self.ui.motor_state_button.setChecked(self.arduino.motors_enabled)
+
+    def toggle_motor_state(self):
+        self.arduino.toggle_motors()
 
     def send_p1_warning(self):
         self.ui.p1_setup_send_BTN.setStyleSheet("background-color: green; color: black")
@@ -608,9 +620,6 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.set_p3_amount()
 
         print(self.microstepping)
-
-    def set_experiment_notes(self):
-        self.experiment_notes = self.ui.experiment_notes.text()
 
     # Set the name of the log file
     # Can probably delete
