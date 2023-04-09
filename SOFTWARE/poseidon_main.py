@@ -480,8 +480,8 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         print("STOP command sent.")
 
     def jog(self, btn):
-        print(f"Main> Jog Command. Forward To Syringe Channel Object")
-        self.syringe_channel_1.jog(FORWARD)
+        print(f"Main> Jog Command. Forward To Arduino Object")
+        self.arduino.jog(1, "F", 1)
         # self.statusBar().showMessage("You clicked JOG")
         # #self.serial.flushInput()
         # testData = []
@@ -741,8 +741,6 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
                 p3_accel 			= text[18]
                 p3_setup_jog_delta 	= text[19]
 
-                experiment_notes 	= text[20]
-
                 #print(fname, date_string, p1_syringe, p1_units, p1_speed, p1_accel, p1_setup_jog_delta)
 
             # Here we are setting all of the values as given by the settings file
@@ -779,7 +777,6 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
             p3_setup_jog_delta_index = self.ui.p3_setup_jog_delta_INPUT.findText(p3_setup_jog_delta, QtCore.Qt.MatchFixedString)
             self.ui.p3_setup_jog_delta_INPUT.setCurrentIndex(p3_setup_jog_delta_index)
 
-            self.ui.experiment_notes.setText(experiment_notes)
 
             self.statusBar().showMessage("Settings loaded from: " + text[1])
         else:
