@@ -49,6 +49,8 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.populate_syringe_sizes()
         self.populate_pump_jog_delta()
         self.populate_pump_units()
+
+        #
         self.setting_variables()
         self.populate_ports()
         self.set_port()
@@ -71,7 +73,6 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
     # SETTING : important variables
     # =============================
     def setting_variables(self):
-
         self.set_p1_syringe()
         self.set_p2_syringe()
         self.set_p3_syringe()
@@ -789,7 +790,8 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
     def populate_microstepping(self):
         self.microstepping_values = ['1', '2', '4', '8', '16', '32']
         self.ui.microstepping_DROPDOWN.addItems(self.microstepping_values)
-        self.microstepping = 1
+        self.ui.microstepping_DROPDOWN.setCurrentText('32')
+        self.microstepping = int(self.ui.microstepping_DROPDOWN.currentText())
 
     # Populate the list of possible syringes to the dropdown menus
     def populate_syringe_sizes(self):
