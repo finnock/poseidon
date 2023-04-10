@@ -9,8 +9,10 @@ import serial
 
 # This gets the Qt stuff
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog
 import pyautogui
+import configparser
 
 import numpy as np
 from decimal import Decimal
@@ -19,6 +21,9 @@ from decimal import Decimal
 import poseidon_controller_gui
 
 import traceback, sys
+
+# Import custom python files
+import poseidon_config
 from thread import Thread
 from syringe_channel import *
 from arduino_connection import Arduino, CannotConnectException
@@ -26,6 +31,7 @@ from arduino_connection import Arduino, CannotConnectException
 # #####################################
 # ERROR HANDLING : CANNOT CONNECT CLASS
 # #####################################
+
 
 # #######################
 # GUI : MAIN WINDOW CLASS
@@ -36,18 +42,22 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
     # INITIALIZING : The UI and setting some needed variables
     # =======================================================
     def __init__(self):
+        super(MainWindow, self).__init__()
+
         # creating Arduino connection object
         self.arduino = Arduino()
 
         # Setting the UI to a class variable and connecting all GUI Components
-        super(MainWindow, self).__init__()
         self.ui = poseidon_controller_gui.Ui_MainWindow()
         self.ui.setupUi(self)
+
+        # initialize config parser module and start config load routine
+        self.config = None
+        self.load_settings()
 
         # Put comments here
         self.populate_microstepping()
         self.populate_syringe_sizes()
-        self.populate_pump_jog_delta()
         self.populate_pump_units()
 
         #
@@ -61,13 +71,9 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.connect_all_gui_components()
         self.grey_out_components()
 
-
         # Initializing multithreading to allow parallel operations
         self.threadpool = QtCore.QThreadPool()
         print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
-
-
-
 
     # =============================
     # SETTING : important variables
@@ -76,19 +82,6 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.set_p1_syringe()
         self.set_p2_syringe()
         self.set_p3_syringe()
-
-        self.is_p1_active = False
-        self.is_p2_active = False
-        self.is_p3_active = False
-
-        self.experiment_notes = ""
-
-    def thread_finished(self, th):
-        print("Your thread has completed. Now terminating..")
-        th.stop()
-        print("Thread has been terminated.")
-        print("=============================\n\n")
-        # here is where you need to end the thread
 
     def keystroke(self, key):
         pyautogui.press(key)
@@ -557,9 +550,9 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
     # TODO: can this be moved to arduino file?
     def populate_ports(self):
         """
-            :raises EnvironmentError:
+            raises EnvironmentError
                 On unsupported or unknown platforms
-            :returns:
+            returns
                 A list of the serial ports available on the system
         """
         print("Populating ports..")
@@ -639,335 +632,51 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.date_string = self.date_string.replace(":","_")
         self.log_file_name = self.ui.log_file_name_INPUT.text() + "_" + self.date_string + ".png"
 
+    def load_settings(self):
+        self.config = poseidon_config.PoseidonConfig.load_config()
+
+        # populate UI with loaded settings
+
+
     def save_settings(self):
-        # TODO: if you cancel then it gives error, fix this
-        # TODO: add comment
-        name, _ = QFileDialog.getSaveFileName(self,'Save File', options=QFileDialog.DontUseNativeDialog)
-
-        # Create a date string
-        self.date_string =  datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        # Replace semicolons with underscores
-        self.date_string = self.date_string.replace(":","_")
-
-        date_string = self.date_string
-
-        # write all of the settings here
-        ## Settings for pump 1
-        p1_syringe 			= str(self.p1_syringe)
-        p1_units 			= str(self.p1_units)
-        p1_speed 			= str(self.p1_speed)
-        p1_accel 			= str(self.p1_accel)
-        p1_setup_jog_delta 	= str(self.p1_setup_jog_delta)
-
-        ## Settings for pump 2
-        p2_syringe 			= str(self.p2_syringe)
-        p2_units 			= str(self.p2_units)
-        p2_speed 			= str(self.p2_speed)
-        p2_accel 			= str(self.p2_accel)
-        p2_setup_jog_delta 	= str(self.p2_setup_jog_delta)
-
-        ## Settings for pump 3
-        p3_syringe 			= str(self.p3_syringe)
-        p3_units 			= str(self.p3_units)
-        p3_speed 			= str(self.p3_speed)
-        p3_accel 			= str(self.p3_accel)
-        p3_setup_jog_delta 	= str(self.p3_setup_jog_delta)
-
-        ## Experiment Notes
-        experiment_notes = self.experiment_notes
-
-        text = []
-        text.append("File name: " + name + ".txt" + "\n") 		# line 0
-        text.append("Date time: " + date_string + "\n") 		# line 1
-
-        text.append(":================================ \n") 	# line 2
-        text.append("P1 Syrin: " + p1_syringe + "\n") 			# line 3
-        text.append("P1 Units: " + p1_units + "\n") 			# line 4
-        text.append("P1 Speed: " + p1_speed + "\n") 			# line 5
-        text.append("P1 Accel: " + p1_accel + "\n") 			# line 6
-        text.append("P1 Jog D: " + p1_setup_jog_delta + "\n") 	# line 7
-        text.append(":================================ \n")		# line 8
-        text.append("P2 Syrin: " + p2_syringe + "\n") 			# line 9
-        text.append("P2 Units: " + p2_units + "\n") 			# line 10
-        text.append("P2 Speed: " + p2_speed + "\n") 			# line 11
-        text.append("P2 Accel: " + p2_accel + "\n") 			# line 12
-        text.append("P2 Jog D: " + p2_setup_jog_delta + "\n") 	# line 13
-        text.append(":================================ \n") 	# line 14
-        text.append("P3 Syrin: " + p3_syringe + "\n") 			# line 15
-        text.append("P3 Units: " + p3_units + "\n") 			# line 16
-        text.append("P3 Speed: " + p3_speed + "\n") 			# line 17
-        text.append("P3 Accel: " + p3_accel + "\n") 			# line 18
-        text.append("P3 Jog D: " + p3_setup_jog_delta + "\n") 	# line 19
-        text.append("Exp Note: " + experiment_notes)			# line 20
-
-        if name:
-            with open(name + ".txt", 'w') as f:
-                f.writelines(text)
-                self.statusBar().showMessage("Settings saved in " + name + ".txt")
+        poseidon_config.PoseidonConfig.save_config(self.config)
 
     def toggle_fullscreen(self):
         if self.isFullScreen():
             self.showNormal()
+            self.config['misc']['fullscreen'] = False
         else:
             self.showFullScreen()
+            self.config['misc']['fullscreen'] = True
 
-    def load_settings(self):
-        # need to make name an tuple otherwise i had an error and app crashed
-        name, _ = QFileDialog.getOpenFileName(self, 'Open File', options=QFileDialog.DontUseNativeDialog, filter = "Text (*.txt)")
-
-        if name:
-            with open(name, 'r') as f:
-                text = f.readlines()
-                # here is where you load all of your variables
-                # reformatting the text
-                text = [line.split(':')[-1].strip('\n')[1:] for line in text]
-                fname = text[0]
-                date_string = text[1]
-
-                p1_syringe 			= text[3]
-                p1_units 			= text[4]
-                p1_speed 			= text[5]
-                p1_accel 			= text[6]
-                p1_setup_jog_delta 	= text[7]
-
-                p2_syringe 			= text[9]
-                p2_units 			= text[10]
-                p2_speed 			= text[11]
-                p2_accel 			= text[12]
-                p2_setup_jog_delta 	= text[13]
-
-                p3_syringe 			= text[15]
-                p3_units 			= text[16]
-                p3_speed 			= text[17]
-                p3_accel 			= text[18]
-                p3_setup_jog_delta 	= text[19]
-
-                #print(fname, date_string, p1_syringe, p1_units, p1_speed, p1_accel, p1_setup_jog_delta)
-
-            # Here we are setting all of the values as given by the settings file
-            p1_syringe_index = self.ui.p1_syringe_DROPDOWN.findText(p1_syringe, QtCore.Qt.MatchFixedString)
-            self.ui.p1_syringe_DROPDOWN.setCurrentIndex(p1_syringe_index)
-            p1_units_index = self.ui.p1_units_DROPDOWN.findText(p1_units, QtCore.Qt.MatchFixedString)
-            self.ui.p1_units_DROPDOWN.setCurrentIndex(p1_units_index)
-            self.ui.p1_speed_INPUT.setValue(float(p1_speed))
-            self.ui.p1_accel_INPUT.setValue(float(p1_accel))
-
-            AllItems = [self.ui.p1_setup_jog_delta_INPUT.itemText(i) for i in range(self.ui.p1_setup_jog_delta_INPUT.count())]
-
-            p1_setup_jog_delta_index = self.ui.p1_setup_jog_delta_INPUT.findText(p1_setup_jog_delta, QtCore.Qt.MatchFixedString)
-            self.ui.p1_setup_jog_delta_INPUT.setCurrentIndex(p1_setup_jog_delta_index)
-
-
-            p2_syringe_index = self.ui.p2_syringe_DROPDOWN.findText(p2_syringe, QtCore.Qt.MatchFixedString)
-            self.ui.p2_syringe_DROPDOWN.setCurrentIndex(p2_syringe_index)
-            p2_units_index = self.ui.p2_units_DROPDOWN.findText(p2_units, QtCore.Qt.MatchFixedString)
-            self.ui.p2_units_DROPDOWN.setCurrentIndex(p2_units_index)
-            self.ui.p2_speed_INPUT.setValue(float(p2_speed))
-            self.ui.p2_accel_INPUT.setValue(float(p2_accel))
-
-            p2_setup_jog_delta_index = self.ui.p2_setup_jog_delta_INPUT.findText(p2_setup_jog_delta, QtCore.Qt.MatchFixedString)
-            self.ui.p2_setup_jog_delta_INPUT.setCurrentIndex(p2_setup_jog_delta_index)
-
-            p3_syringe_index = self.ui.p3_syringe_DROPDOWN.findText(p3_syringe, QtCore.Qt.MatchFixedString)
-            self.ui.p3_syringe_DROPDOWN.setCurrentIndex(p3_syringe_index)
-            p3_units_index = self.ui.p3_units_DROPDOWN.findText(p3_units, QtCore.Qt.MatchFixedString)
-            self.ui.p3_units_DROPDOWN.setCurrentIndex(p3_units_index)
-            self.ui.p3_speed_INPUT.setValue(float(p3_speed))
-            self.ui.p3_accel_INPUT.setValue(float(p3_accel))
-
-            p3_setup_jog_delta_index = self.ui.p3_setup_jog_delta_INPUT.findText(p3_setup_jog_delta, QtCore.Qt.MatchFixedString)
-            self.ui.p3_setup_jog_delta_INPUT.setCurrentIndex(p3_setup_jog_delta_index)
-
-
-            self.statusBar().showMessage("Settings loaded from: " + text[1])
-        else:
-            self.statusBar().showMessage("No file selected.")
 
     # Populate the microstepping amounts for the dropdown menu
     def populate_microstepping(self):
-        self.microstepping_values = ['1', '2', '4', '8', '16', '32']
-        self.ui.microstepping_DROPDOWN.addItems(self.microstepping_values)
-        self.ui.microstepping_DROPDOWN.setCurrentText('32')
-        self.microstepping = int(self.ui.microstepping_DROPDOWN.currentText())
+        microstepping_values = ['1', '2', '4', '8', '16', '32']
+        self.ui.setup_microstepping_input.addItems(microstepping_values)
+        self.ui.setup_microstepping_input.setCurrentText('32')
+        self.microstepping = int(self.ui.setup_microstepping_input.currentText())
 
     # Populate the list of possible syringes to the dropdown menus
     def populate_syringe_sizes(self):
-        # labels for each syringe
-        self.syringe_options = ["BD 1 mL", "BD 3 mL", "BD 5 mL", "BD 10 mL", "BD 20 mL", "BD 30 mL", "BD 60 mL", "500 mL"]
+        # Volume given in mL
+        # Area given in mm^2
+        self.syringe_options = {
+            '500 mL': {
+                'volume': '500',
+                'area': 3631.681168,
+            }
+        }
 
-        # volumina of the syringes in mL
-        self.syringe_volumes = [1, 3, 5, 10, 20, 30, 60, 500]
-
-        # circle areas of the syringes in mm^2
-        self.syringe_areas = [17.34206347, 57.88559215, 112.9089185, 163.539454, 285.022957, 366.0961536, 554.0462538, 3631.681168]
-
-        self.ui.p1_syringe_DROPDOWN.addItems(self.syringe_options)
-        self.ui.p2_syringe_DROPDOWN.addItems(self.syringe_options)
-        self.ui.p3_syringe_DROPDOWN.addItems(self.syringe_options)
-
-    # Set Px syringe
-    def set_p1_syringe(self):
-        self.p1_syringe = self.ui.p1_syringe_DROPDOWN.currentText()
-        self.p1_syringe_area = self.syringe_areas[self.syringe_options.index(self.p1_syringe)]
-        self.display_p1_syringe()
-
-        self.set_p1_units()
-        self.set_p1_speed()
-        self.set_p1_accel()
-        self.set_p1_setup_jog_delta()
-        self.set_p1_amount()
-
-    def set_p2_syringe(self):
-        self.p2_syringe = self.ui.p2_syringe_DROPDOWN.currentText()
-        self.p2_syringe_area = self.syringe_areas[self.syringe_options.index(self.p2_syringe)]
-        self.display_p2_syringe()
-
-        self.set_p2_units()
-        self.set_p2_speed()
-        self.set_p2_accel()
-        self.set_p2_setup_jog_delta()
-        self.set_p2_amount()
-
-    def set_p3_syringe(self):
-        self.p3_syringe = self.ui.p3_syringe_DROPDOWN.currentText()
-        self.p3_syringe_area = self.syringe_areas[self.syringe_options.index(self.p3_syringe)]
-        self.display_p3_syringe()
-
-        self.set_p3_units()
-        self.set_p3_speed()
-        self.set_p3_accel()
-        self.set_p3_setup_jog_delta()
-        self.set_p3_amount()
-
-    # Set Px units
-    def set_p1_units(self):
-        self.p1_units = self.ui.p1_units_DROPDOWN.currentText()
-
-        length = self.p1_units.split("/")[0]
-        self.ui.p1_units_LABEL_2.setText(length)
-
-        self.set_p1_speed()
-        self.set_p1_accel()
-        self.set_p1_setup_jog_delta()
-        self.set_p1_amount()
-
-    def set_p2_units(self):
-        self.p2_units = self.ui.p2_units_DROPDOWN.currentText()
-
-        length = self.p2_units.split("/")[0]
-        self.ui.p2_units_LABEL_2.setText(length)
-
-        self.set_p2_speed()
-        self.set_p2_accel()
-        self.set_p2_setup_jog_delta()
-        self.set_p2_amount()
-
-    def set_p3_units(self):
-        self.p3_units = self.ui.p3_units_DROPDOWN.currentText()
-
-        length = self.p3_units.split("/")[0]
-        self.ui.p3_units_LABEL_2.setText(length)
-
-        self.set_p3_speed()
-        self.set_p3_accel()
-        self.set_p3_setup_jog_delta()
-        self.set_p3_amount()
-
+        self.ui.setup_channel_1_syringe_input.addItems(self.syringe_options.keys())
+        self.ui.setup_channel_2_syringe_input.addItems(self.syringe_options.keys())
+        self.ui.setup_channel_3_syringe_input.addItems(self.syringe_options.keys())
 
     def populate_pump_units(self):
         self.units = ['mm/s', 'mL/s', 'mL/hr', 'µL/hr']
-        self.ui.p1_units_DROPDOWN.addItems(self.units)
-        self.ui.p2_units_DROPDOWN.addItems(self.units)
-        self.ui.p3_units_DROPDOWN.addItems(self.units)
-
-    def populate_pump_jog_delta(self):
-        self.jog_delta = ['0.01', '0.1', '1.0', '10.0']
-        self.ui.p1_setup_jog_delta_INPUT.addItems(self.jog_delta)
-        self.ui.p2_setup_jog_delta_INPUT.addItems(self.jog_delta)
-        self.ui.p3_setup_jog_delta_INPUT.addItems(self.jog_delta)
-
-    # Set Px speed
-    def set_p1_speed(self):
-        self.p1_speed = self.ui.p1_speed_INPUT.value()
-        self.ui.p1_units_LABEL.setText(str(self.p1_speed) + " " + self.ui.p1_units_DROPDOWN.currentText())
-        self.p1_speed_to_send = self.convert_speed(self.p1_speed, self.p1_units, self.p1_syringe_area, self.microstepping)
-
-    def set_p2_speed(self):
-        self.p2_speed = self.ui.p2_speed_INPUT.value()
-        self.ui.p2_units_LABEL.setText(str(self.p2_speed) + " " + self.ui.p2_units_DROPDOWN.currentText())
-        self.p2_speed_to_send = self.convert_speed(self.p2_speed, self.p2_units, self.p2_syringe_area, self.microstepping)
-
-    def set_p3_speed(self):
-        self.p3_speed = self.ui.p3_speed_INPUT.value()
-        self.ui.p3_units_LABEL.setText(str(self.p3_speed) + " " + self.ui.p3_units_DROPDOWN.currentText())
-        self.p3_speed_to_send = self.convert_speed(self.p3_speed, self.p3_units, self.p3_syringe_area, self.microstepping)
-
-    # Set Px accel
-    def set_p1_accel(self):
-        self.p1_accel = self.ui.p1_accel_INPUT.value()
-        self.p1_accel_to_send = self.convert_accel(self.p1_accel, self.p1_units, self.p1_syringe_area, self.microstepping)
-
-    def set_p2_accel(self):
-        self.p2_accel = self.ui.p2_accel_INPUT.value()
-        self.p2_accel_to_send = self.convert_accel(self.p2_accel, self.p2_units, self.p2_syringe_area, self.microstepping)
-
-    def set_p3_accel(self):
-        self.p3_accel = self.ui.p3_accel_INPUT.value()
-        self.p3_accel_to_send = self.convert_accel(self.p3_accel, self.p3_units, self.p3_syringe_area, self.microstepping)
-
-    # Set Px jog delta (setup)
-    def set_p1_setup_jog_delta(self):
-        self.p1_setup_jog_delta = self.ui.p1_setup_jog_delta_INPUT.currentText()
-        self.p1_setup_jog_delta = float(self.ui.p1_setup_jog_delta_INPUT.currentText())
-        self.p1_setup_jog_delta_to_send = self.convert_displacement(self.p1_setup_jog_delta, self.p1_units, self.p1_syringe_area, self.microstepping)
-
-    def set_p2_setup_jog_delta(self):
-        self.p2_setup_jog_delta = float(self.ui.p2_setup_jog_delta_INPUT.currentText())
-        self.p2_setup_jog_delta_to_send = self.convert_displacement(self.p2_setup_jog_delta, self.p2_units, self.p2_syringe_area, self.microstepping)
-
-    def set_p3_setup_jog_delta(self):
-        self.p3_setup_jog_delta = float(self.ui.p3_setup_jog_delta_INPUT.currentText())
-        self.p3_setup_jog_delta_to_send = self.convert_displacement(self.p3_setup_jog_delta, self.p3_units, self.p3_syringe_area, self.microstepping)
-
-    # Send Px settings
-    def send_p1_settings(self):
-        self.statusBar().showMessage("You clicked SEND P1 SETTINGS")
-        self.p1_settings = []
-        self.p1_settings.append("<SETTING,SPEED,1," + str(self.p1_speed_to_send) + ",F,0.0,0.0,0.0>")
-        self.p1_settings.append("<SETTING,ACCEL,1," + str(self.p1_accel_to_send) + ",F,0.0,0.0,0.0>")
-        self.p1_settings.append("<SETTING,DELTA,1," + str(self.p1_setup_jog_delta_to_send) + ",F,0.0,0.0,0.0>")
-
-        print("Sending P1 SETTINGS..")
-        thread = Thread(self.runTest, self.p1_settings)
-        thread.finished.connect(lambda:self.thread_finished(thread))
-        thread.start()
-        print("P1 SETTINGS sent.")
-
-    def send_p2_settings(self):
-        self.statusBar().showMessage("You clicked SEND P2 SETTINGS")
-        self.p2_settings = []
-        self.p2_settings.append("<SETTING,SPEED,2," + str(self.p2_speed_to_send) + ",F,0.0,0.0,0.0>")
-        self.p2_settings.append("<SETTING,ACCEL,2," + str(self.p2_accel_to_send) + ",F,0.0,0.0,0.0>")
-        self.p2_settings.append("<SETTING,DELTA,2," + str(self.p2_setup_jog_delta_to_send) + ",F,0.0,0.0,0.0>")
-
-        print("Sending P2 SETTINGS..")
-        thread = Thread(self.runTest, self.p2_settings)
-        thread.finished.connect(lambda:self.thread_finished(thread))
-        thread.start()
-        print("P2 SETTINGS sent.")
-
-    def send_p3_settings(self):
-        self.statusBar().showMessage("You clicked SEND P3 SETTINGS")
-        self.p3_settings = []
-        self.p3_settings.append("<SETTING,SPEED,3," + str(self.p3_speed_to_send) + ",F,0.0,0.0,0.0>")
-        self.p3_settings.append("<SETTING,ACCEL,3," + str(self.p3_accel_to_send) + ",F,0.0,0.0,0.0>")
-        self.p3_settings.append("<SETTING,DELTA,3," + str(self.p3_setup_jog_delta_to_send) + ",F,0.0,0.0,0.0>")
-
-        print("Sending P3 SETTINGS..")
-        thread = Thread(self.runTest, self.p3_settings)
-        thread.finished.connect(lambda:self.thread_finished(thread))
-        thread.start()
-        print("P3 SETTINGS sent.")
+        self.ui.setup_channel_1_unit_input.addItems(self.units)
+        self.ui.setup_channel_2_unit_input.addItems(self.units)
+        self.ui.setup_channel_3_unit_input.addItems(self.units)
 
     # Send all settings
     def send_all(self):
