@@ -115,7 +115,7 @@ class Arduino:
         ----------
         motor_channel : int
             The channel which should be manipulated (1..3)
-        direction : int
+        direction : string
             The direction in which the motor should be moved. 1 for FORWARD, 0 for BACKWARD.
         distance : float
             The distance by which the motor should be moved, given in mm.
@@ -124,7 +124,7 @@ class Arduino:
         distances = [0.0, 0.0, 0.0]
         distances[motor_channel - 1] = distance * 200 * 32
 
-        self.send_manual_arduino_command('RUN', 'DIST', motor_channel, 1, direction, distances)
+        self.send_manual_arduino_command('RUN', 'DIST', "1", 1, direction, distances)
 
     def enable_motors(self):
         """ Enables all motors """
