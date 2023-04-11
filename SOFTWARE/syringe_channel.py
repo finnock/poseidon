@@ -17,6 +17,3 @@ class SyringeChannel:
         self.absolute_position = None
         self.remaining_volume = 0
         self.acceleration = 5
-
-    def jog(self, direction):
-        self.main.arduino.jog(self.channel_number, direction, 1)

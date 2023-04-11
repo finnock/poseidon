@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1142</width>
-    <height>605</height>
+    <width>1143</width>
+    <height>600</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -35,7 +35,7 @@
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <property name="iconSize">
        <size>
@@ -264,7 +264,7 @@
                  </property>
                  <property name="icon">
                   <iconset>
-                   <normaloff>icons/disc white.png</normaloff>icons/disc white.png</iconset>
+                   <normaloff>../../../.designer/backup/icons/disc white.png</normaloff>../../../.designer/backup/icons/disc white.png</iconset>
                  </property>
                 </widget>
                </item>
@@ -275,7 +275,7 @@
                  </property>
                  <property name="icon">
                   <iconset>
-                   <normaloff>icons/disc black.png</normaloff>icons/disc black.png</iconset>
+                   <normaloff>../../../.designer/backup/icons/disc black.png</normaloff>../../../.designer/backup/icons/disc black.png</iconset>
                  </property>
                 </widget>
                </item>
@@ -462,7 +462,7 @@
               </property>
               <property name="icon">
                <iconset>
-                <normaloff>../../../.designer/backup/icons/fullscreen.png</normaloff>../../../.designer/backup/icons/fullscreen.png</iconset>
+                <normaloff>../../../../.designer/backup/icons/fullscreen.png</normaloff>../../../../.designer/backup/icons/fullscreen.png</iconset>
               </property>
              </widget>
             </item>
@@ -1821,7 +1821,7 @@ asd
         </property>
         <property name="icon">
          <iconset>
-          <normaloff>icons/stop.png</normaloff>icons/stop.png</iconset>
+          <normaloff>../../../.designer/backup/icons/stop.png</normaloff>../../../.designer/backup/icons/stop.png</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -1845,8 +1845,8 @@ asd
         </property>
         <property name="icon">
          <iconset>
-          <normaloff>../../../.designer/backup/icons/motors_disabled.png</normaloff>
-          <normalon>../../../.designer/backup/icons/motors_enabled.png</normalon>../../../.designer/backup/icons/motors_disabled.png</iconset>
+          <normaloff>../../../../.designer/backup/icons/motors_disabled.png</normaloff>
+          <normalon>../../../../.designer/backup/icons/motors_enabled.png</normalon>../../../../.designer/backup/icons/motors_disabled.png</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -1907,7 +1907,7 @@ asd
           </property>
           <property name="icon">
            <iconset>
-            <normaloff>../../../.designer/backup/icons/backspace.png</normaloff>../../../.designer/backup/icons/backspace.png</iconset>
+            <normaloff>../../../../.designer/backup/icons/backspace.png</normaloff>../../../../.designer/backup/icons/backspace.png</iconset>
           </property>
           <property name="iconSize">
            <size>
@@ -2336,7 +2336,7 @@ asd
           </property>
           <property name="icon">
            <iconset>
-            <normaloff>../../../.designer/backup/icons/enter.png</normaloff>../../../.designer/backup/icons/enter.png</iconset>
+            <normaloff>../../../../.designer/backup/icons/enter.png</normaloff>../../../../.designer/backup/icons/enter.png</iconset>
           </property>
           <property name="iconSize">
            <size>

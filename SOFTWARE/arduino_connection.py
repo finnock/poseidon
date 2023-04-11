@@ -1,5 +1,7 @@
 import serial
 import time
+import glob
+import sys
 from thread import Thread
 
 
@@ -8,18 +10,19 @@ class CannotConnectException(Exception):
 
 
 class Arduino:
-    def __init__(self):
+    def __init__(self, config):
         # Declaring start, mid, and end marker for sending code to Arduino
         self.START_MARKER = 60  # <
         self.MID_MARKER = 44 	# ,
         self.END_MARKER = 62    # >
 
-        self.port = None
+        self.config = config
         self.serial = None
         self.connected = False
 
-        self.steps = None
-        self.steps_per_mm = None
+        # total number of steps per revolution
+        self.steps_per_revolution = 200
+        self.mm_per_revolution = 2
         self.motors_enabled = False
         self.motors_changed = None
 
@@ -29,8 +32,8 @@ class Arduino:
             self.port in vars()
             try:
                 self.serial = serial.Serial()
-                self.serial.port = self.port
-                self.serial.baudrate = 230400
+                self.serial.port = self.config['connect']['port']
+                self.serial.baudrate = self.config['connect']['baudrate']
                 self.serial.parity = serial.PARITY_NONE
                 self.serial.stopbits = serial.STOPBITS_ONE
                 self.serial.bytesize = serial.EIGHTBITS
@@ -68,6 +71,36 @@ class Arduino:
         self.serial.close()
         self.connected = False
         print("Arduino> Board has been disconnected")
+
+    @staticmethod
+    def discover_ports():
+        """
+            raises EnvironmentError
+                On unsupported or unknown platforms
+            returns
+                A list of the serial ports available on the system
+        """
+        print("Populating ports..")
+        if sys.platform.startswith('win'):
+            # For speed reason capped to range(50). Increase to 256 if needed.
+            ports = ['COM%s' % (i + 1) for i in range(50)]
+        elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
+            # this excludes your current terminal "/dev/tty"
+            ports = glob.glob('/dev/tty[A-Za-z]*')
+        elif sys.platform.startswith('darwin'):
+            ports = glob.glob('/dev/tty.*')
+        else:
+            raise EnvironmentError('Unsupported platform')
+
+        result = []
+        for port in ports:
+            try:
+                s = serial.Serial(port)
+                s.close()
+                result.append(port)
+            except (OSError, serial.SerialException):
+                pass
+        return result
 
     def send_commands(self, commands):
         thread = Thread(self.send_commands_helper, commands)

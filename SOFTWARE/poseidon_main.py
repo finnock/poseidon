@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import glob
-import sys
 from datetime import datetime
 import os
 import serial
@@ -52,21 +50,38 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.ui.setupUi(self)
 
         # initialize config parser module and start config load routine
-        self.config = None
-        self.load_settings()
+        self.config = self.load_settings()
 
         # Put comments here
         self.populate_microstepping()
         self.populate_syringe_sizes()
         self.populate_pump_units()
 
-        #
-        self.setting_variables()
-        self.populate_ports()
-        self.set_port()
-
         # Set up Syringe Channels
         self.syringe_channel_1 = SyringeChannel(self, 1)
+        self.syringe_channel_2 = SyringeChannel(self, 2)
+        self.syringe_channel_3 = SyringeChannel(self, 3)
+
+        sc = self.syringe_channel_1
+        sc_config = self.config['syringe_channel_1']
+        sc.syringe_size = sc_config['size']
+        sc.syringe_area = self.syringe_options[sc.syringe_size]['area']
+        sc.syringe_total_volume = self.syringe_options[sc.syringe_size]['volume']
+
+        sc = self.syringe_channel_2
+        sc_config = self.config['syringe_channel_2']
+        sc.syringe_size = sc_config['size']
+        sc.syringe_area = self.syringe_options[sc.syringe_size]['area']
+        sc.syringe_total_volume = self.syringe_options[sc.syringe_size]['volume']
+
+        sc = self.syringe_channel_3
+        sc_config = self.config['syringe_channel_3']
+        sc.syringe_size = sc_config['size']
+        sc.syringe_area = self.syringe_options[sc.syringe_size]['area']
+        sc.syringe_total_volume = self.syringe_options[sc.syringe_size]['volume']
+
+        # get the list of accessible serial ports, add them to the ui and select the first one to the config.
+        self.refresh_ports()
 
         self.connect_all_gui_components()
         self.grey_out_components()
@@ -74,14 +89,6 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         # Initializing multithreading to allow parallel operations
         self.threadpool = QtCore.QThreadPool()
         print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
-
-    # =============================
-    # SETTING : important variables
-    # =============================
-    def setting_variables(self):
-        self.set_p1_syringe()
-        self.set_p2_syringe()
-        self.set_p3_syringe()
 
     def keystroke(self, key):
         pyautogui.press(key)
@@ -170,7 +177,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 
         # Port, first populate it then connect it (population done earlier)
         self.ui.refresh_ports_BTN.clicked.connect(self.refresh_ports)
-        self.ui.port_DROPDOWN.currentIndexChanged.connect(self.set_port)
+        self.ui.port_DROPDOWN.currentIndexChanged.connect(self.ui_setup_port_input_changed)
 
         # Set the microstepping value, default is 1
         self.ui.microstepping_DROPDOWN.currentIndexChanged.connect(self.set_microstepping)
@@ -546,49 +553,17 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.ui.disconnect_BTN.setEnabled(False)
 
 
-    # Populate the available ports
-    # TODO: can this be moved to arduino file?
-    def populate_ports(self):
-        """
-            raises EnvironmentError
-                On unsupported or unknown platforms
-            returns
-                A list of the serial ports available on the system
-        """
-        print("Populating ports..")
-        if sys.platform.startswith('win'):
-            ports = ['COM%s' % (i + 1) for i in range(256)]
-        elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
-            # this excludes your current terminal "/dev/tty"
-            ports = glob.glob('/dev/tty[A-Za-z]*')
-        elif sys.platform.startswith('darwin'):
-            ports = glob.glob('/dev/tty.*')
-        else:
-            raise EnvironmentError('Unsupported platform')
-
-        result = []
-        for port in ports:
-            try:
-                s = serial.Serial(port)
-                s.close()
-                result.append(port)
-            except (OSError, serial.SerialException):
-                pass
-        self.ui.port_DROPDOWN.addItems(result)
-        print("Ports have been populated.")
-
     # Refresh the list of ports
     # TODO: can this be moved to arduino file?
     def refresh_ports(self):
-        self.statusBar().showMessage("You clicked REFRESH PORTS")
-        self.ui.port_DROPDOWN.clear()
-        self.populate_ports()
-        self.set_port()
+        self.ui.setup_port_input.clear()
+        ports = self.arduino.discover_ports()
+        self.ui.setup_port_input.addItems(ports)
+        self.ui.setup_port_input.currentIndexChanged()
 
-    # Set the port that is selected from the dropdown menu
-    # TODO: find usage, move to arduino file
-    def set_port(self):
-        self.arduino.port = self.ui.port_DROPDOWN.currentText()
+    def ui_setup_port_input_changed(self):
+        # get the port from UI and forward it to the config and arduino objects.
+        self.config['connect']['port'] = self.ui.setup_port_input.currentText()
 
     # Set the microstepping amount from the dropdown menu
     # TODO: There is definitely a better way of updating different variables
@@ -633,8 +608,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.log_file_name = self.ui.log_file_name_INPUT.text() + "_" + self.date_string + ".png"
 
     def load_settings(self):
-        self.config = poseidon_config.PoseidonConfig.load_config()
-
+        return poseidon_config.PoseidonConfig.load_config()
         # populate UI with loaded settings
 
 
