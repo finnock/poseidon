@@ -52,10 +52,11 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         # initialize config parser module and start config load routine
         self.config = self.load_settings()
 
-        # Put comments here
+        # Populate drop-down UI Objects
         self.populate_microstepping()
         self.populate_syringe_sizes()
         self.populate_pump_units()
+        self.ui_setup_port_refresh_button_clicked()
 
         # Set up Syringe Channels
         self.syringe_channel_1 = SyringeChannel(self, 1)
@@ -80,10 +81,10 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         sc.syringe_area = self.syringe_options[sc.syringe_size]['area']
         sc.syringe_total_volume = self.syringe_options[sc.syringe_size]['volume']
 
-        # get the list of accessible serial ports, add them to the ui and select the first one to the config.
-        self.refresh_ports()
-
+        # Connect all UI Objects to the necessary functions
         self.connect_all_gui_components()
+
+        # Disable all UI Elements which cant be used as long as the Arduino is not connected
         self.grey_out_components()
 
         # Initializing multithreading to allow parallel operations
@@ -93,91 +94,48 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
     def keystroke(self, key):
         pyautogui.press(key)
 
+    def ui_update_config(self):
+        self.config['connection']['com-port'] = self.ui.setup_port_input.currentText()
+        self.config['connection']['microsteps'] = int(self.ui.setup_microstepping_input.currentText())
+        # TODO: add all config UI objects
+
     # ===================================
     # CONNECTING : all the GUI Components
     # ===================================
     def connect_all_gui_components(self):
 
         # ~~~~~~~~~~~~~~~
-        # SIDE : CONTROLS
+        # SIDE STACk
         # ~~~~~~~~~~~~~~~
 
-        self.arduino.motors_changed = self.motor_state_change
-        self.ui.motor_state_button.clicked.connect(self.toggle_motor_state)
+        # Connect the arduino motor state change callback method to the UI method
+        self.arduino.motors_changed_callback = self.ui_update_motor_state
+        self.ui.side_motors_button.clicked.connect(self.toggle_motor_state)
+        self.ui.side_stop_button.clicked.connect(self.ui_side_stop_button_clicked)
+        # TODO: connect play/pause button
 
-        # ~~~~~~~~~~~~~~~
-        # SIDE : NUMPAD
-        # ~~~~~~~~~~~~~~~
-
-        self.ui.numpad_1_BTN.clicked.connect(lambda: self.keystroke('1'))
-        self.ui.numpad_2_BTN.clicked.connect(lambda: self.keystroke('2'))
-        self.ui.numpad_3_BTN.clicked.connect(lambda: self.keystroke('3'))
-        self.ui.numpad_4_BTN.clicked.connect(lambda: self.keystroke('4'))
-        self.ui.numpad_5_BTN.clicked.connect(lambda: self.keystroke('5'))
-        self.ui.numpad_6_BTN.clicked.connect(lambda: self.keystroke('6'))
-        self.ui.numpad_7_BTN.clicked.connect(lambda: self.keystroke('7'))
-        self.ui.numpad_8_BTN.clicked.connect(lambda: self.keystroke('8'))
-        self.ui.numpad_9_BTN.clicked.connect(lambda: self.keystroke('9'))
-        self.ui.numpad_delete_BTN.clicked.connect(lambda: self.keystroke('backspace'))
-        self.ui.numpad_komma_BTN.clicked.connect(lambda: self.keystroke('.'))
-
-        # ~~~~~~~~~~~~~~~~
-        # TAB : Controller
-        # ~~~~~~~~~~~~~~~~
-
-        # Px active checkboxes
-        self.ui.p1_activate_CHECKBOX.stateChanged.connect(self.toggle_p1_activation)
-        self.ui.p2_activate_CHECKBOX.stateChanged.connect(self.toggle_p2_activation)
-        self.ui.p3_activate_CHECKBOX.stateChanged.connect(self.toggle_p3_activation)
-
-        # Px display (TODO)
-
-        # Px syringe display
-        self.ui.p1_syringe_DROPDOWN.currentIndexChanged.connect(self.display_p1_syringe)
-        self.ui.p2_syringe_DROPDOWN.currentIndexChanged.connect(self.display_p2_syringe)
-        self.ui.p3_syringe_DROPDOWN.currentIndexChanged.connect(self.display_p3_syringe)
-
-
-        # Px speed display
-        self.ui.p1_units_DROPDOWN.currentIndexChanged.connect(self.display_p1_speed)
-        self.ui.p2_units_DROPDOWN.currentIndexChanged.connect(self.display_p2_speed)
-        self.ui.p3_units_DROPDOWN.currentIndexChanged.connect(self.display_p3_speed)
-
-
-
-        #self.populate_pump_units()
-
-        # Px amount
-        self.ui.p1_amount_INPUT.valueChanged.connect(self.set_p1_amount)
-        self.ui.p2_amount_INPUT.valueChanged.connect(self.set_p2_amount)
-        self.ui.p3_amount_INPUT.valueChanged.connect(self.set_p3_amount)
-
-        # Px jog delta
-        #self.ui.p1_jog_delta_INPUT.valueChanged.connect(self.set_p1_jog_delta)
-        #self.ui.p2_jog_delta_INPUT.valueChanged.connect(self.set_p2_jog_delta)
-        #self.ui.p3_jog_delta_INPUT.valueChanged.connect(self.set_p3_jog_delta)
-
-        # Action buttons
-        self.ui.run_BTN.clicked.connect(self.run)
-        self.ui.pause_BTN.clicked.connect(self.pause)
-        self.ui.zero_BTN.clicked.connect(self.zero)
-        self.ui.stop_BTN.clicked.connect(self.stop)
-
-        # Jog Buttons
-        self.ui.jog_plus_BTN.clicked.connect(lambda:self.jog(self.ui.jog_plus_BTN))
-        self.ui.jog_minus_BTN.clicked.connect(lambda:self.jog(self.ui.jog_minus_BTN))
-
-        # Set coordinate system
-        self.ui.absolute_RADIO.toggled.connect(lambda:self.set_coordinate(self.ui.absolute_RADIO))
-        self.ui.incremental_RADIO.toggled.connect(lambda:self.set_coordinate(self.ui.incremental_RADIO))
+        # TODO: update numpad button naming to convention
+        self.ui.side_num_pad_0_button.clicked.connect(lambda: self.keystroke('0'))
+        self.ui.side_num_pad_1_button.clicked.connect(lambda: self.keystroke('1'))
+        self.ui.side_num_pad_2_button.clicked.connect(lambda: self.keystroke('2'))
+        self.ui.side_num_pad_3_button.clicked.connect(lambda: self.keystroke('3'))
+        self.ui.side_num_pad_4_button.clicked.connect(lambda: self.keystroke('4'))
+        self.ui.side_num_pad_5_button.clicked.connect(lambda: self.keystroke('5'))
+        self.ui.side_num_pad_6_button.clicked.connect(lambda: self.keystroke('6'))
+        self.ui.side_num_pad_7_button.clicked.connect(lambda: self.keystroke('7'))
+        self.ui.side_num_pad_8_button.clicked.connect(lambda: self.keystroke('8'))
+        self.ui.side_num_pad_9_button.clicked.connect(lambda: self.keystroke('9'))
+        self.ui.side_num_pad_delete_button.clicked.connect(lambda: self.keystroke('backspace'))
+        self.ui.side_num_pad_comma_button.clicked.connect(lambda: self.keystroke('.'))
+        # TODO: clear button
 
         # ~~~~~~~~~~~
         # TAB : Setup
         # ~~~~~~~~~~~
 
         # Port, first populate it then connect it (population done earlier)
-        self.ui.refresh_ports_BTN.clicked.connect(self.refresh_ports)
-        self.ui.port_DROPDOWN.currentIndexChanged.connect(self.ui_setup_port_input_changed)
+        self.ui.setup_refresh_ports_button.clicked.connect(self.ui_setup_port_refresh_button_clicked)
+        self.ui.setup_port_input.currentIndexChanged.connect(self.ui_update_config)
 
         # Set the microstepping value, default is 1
         self.ui.microstepping_DROPDOWN.currentIndexChanged.connect(self.set_microstepping)
@@ -260,8 +218,8 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         # Send all the settings at once
         self.ui.send_all_BTN.clicked.connect(self.send_all)
 
-    def motor_state_change(self):
-        self.ui.motor_state_button.setChecked(self.arduino.motors_enabled)
+    def ui_update_motor_state(self):
+        self.ui.side_motors_button.setChecked(self.arduino.motors_enabled)
 
     def toggle_motor_state(self):
         self.arduino.toggle_motors()
@@ -423,38 +381,6 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         else:
             self.statusBar().showMessage("No pumps enabled.")
 
-    # Clean up this text
-    def pause(self):
-        active_pumps = self.get_active_pumps()
-        pumps_2_run = ''.join(map(str,active_pumps))
-
-        if self.ui.pause_BTN.text() == "Pause":
-            self.statusBar().showMessage("You clicked PAUSE")
-            testData = []
-            cmd = "<PAUSE,BLAH," + pumps_2_run + ",BLAH,F,0.0,0.0,0.0>"
-            testData.append(cmd)
-
-            print("Sending PAUSE command..")
-            thread = Thread(self.runTest, testData)
-            thread.finished.connect(lambda:self.thread_finished(thread))
-            thread.start()
-            print("PAUSE command sent.")
-
-            self.ui.pause_BTN.setText("Resume")
-
-        elif self.ui.pause_BTN.text() == "Resume":
-            self.statusBar().showMessage("You clicked RESUME")
-            testData = []
-            cmd = "<RESUME,BLAH," + pumps_2_run + ",BLAH,F,0.0,0.0,0.0>"
-            testData.append(cmd)
-
-            print("Sending RESUME command..")
-            thread = Thread(self.runTest, testData)
-            thread.finished.connect(lambda:self.thread_finished(thread))
-            thread.start()
-            print("RESUME command sent.")
-
-            self.ui.pause_BTN.setText("Pause")
 
     # fix
     def zero(self):
@@ -470,15 +396,9 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         print("ZERO command sent.")
 
 
-    def stop(self):
-        self.statusBar().showMessage("You clicked STOP")
-        cmd = "<STOP,BLAH,BLAH,BLAH,F,0.0,0.0,0.0>"
-
-        print("Sending STOP command..")
-        thread = Thread(self.send_single_command, cmd)
-        thread.finished.connect(lambda:self.thread_finished(thread))
-        thread.start()
-        print("STOP command sent.")
+    def ui_side_stop_button_clicked(self):
+        self.statusBar().showMessage("All motors halted")
+        self.arduino.stop_movement()
 
     def jog(self, btn):
         print(f"Main> Jog Command. Forward To Arduino Object")
@@ -554,12 +474,17 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 
 
     # Refresh the list of ports
-    # TODO: can this be moved to arduino file?
-    def refresh_ports(self):
-        self.ui.setup_port_input.clear()
+    def ui_setup_port_refresh_button_clicked(self):
+        # Get a list of possible ports from the arduino object
         ports = self.arduino.discover_ports()
+
+        # Update the UI Object and trigger its changed function
+        # TODO: findout if the manual trigger is necessary
+        self.ui.setup_port_input.clear()
         self.ui.setup_port_input.addItems(ports)
-        self.ui.setup_port_input.currentIndexChanged()
+        # TODO: check if port from config is found in port list
+        # otherwise set to first port from list
+        self.ui.setup_port_input.setCurrentText(self.config['setup']['port'])
 
     def ui_setup_port_input_changed(self):
         # get the port from UI and forward it to the config and arduino objects.
@@ -629,12 +554,13 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         microstepping_values = ['1', '2', '4', '8', '16', '32']
         self.ui.setup_microstepping_input.addItems(microstepping_values)
         self.ui.setup_microstepping_input.setCurrentText('32')
-        self.microstepping = int(self.ui.setup_microstepping_input.currentText())
+        self.config['config']['microsteps'] = int(self.ui.setup_microstepping_input.currentText())
 
     # Populate the list of possible syringes to the dropdown menus
     def populate_syringe_sizes(self):
         # Volume given in mL
         # Area given in mm^2
+        # TODO: allow these to be setup in the software and loaded/saved to an .ini file
         self.syringe_options = {
             '500 mL': {
                 'volume': '500',
@@ -642,15 +568,21 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
             }
         }
 
+        # Update the UI Objects and set to the value stored in the config
         self.ui.setup_channel_1_syringe_input.addItems(self.syringe_options.keys())
         self.ui.setup_channel_2_syringe_input.addItems(self.syringe_options.keys())
         self.ui.setup_channel_3_syringe_input.addItems(self.syringe_options.keys())
+        self.ui.setup_channel_1_syringe_input.setCurrentText(self.config['syringe-channel-1']['size'])
+        self.ui.setup_channel_2_syringe_input.setCurrentText(self.config['syringe-channel-2']['size'])
+        self.ui.setup_channel_3_syringe_input.setCurrentText(self.config['syringe-channel-3']['size'])
 
     def populate_pump_units(self):
-        self.units = ['mm/s', 'mL/s', 'mL/hr', 'µL/hr']
-        self.ui.setup_channel_1_unit_input.addItems(self.units)
-        self.ui.setup_channel_2_unit_input.addItems(self.units)
-        self.ui.setup_channel_3_unit_input.addItems(self.units)
+        # TODO: Think about a better method
+        # TODO: add units to config so they can be saved and loaded
+        units = ['mm/s', 'mL/s', 'mL/hr', 'µL/hr']
+        self.ui.setup_channel_1_unit_input.addItems(units)
+        self.ui.setup_channel_2_unit_input.addItems(units)
+        self.ui.setup_channel_3_unit_input.addItems(units)
 
     # Send all settings
     def send_all(self):
@@ -659,15 +591,12 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.settings = []
         self.settings.append("<SETTING,SPEED,1,"+str(self.p1_speed_to_send)+",F,0.0,0.0,0.0>")
         self.settings.append("<SETTING,ACCEL,1,"+str(self.p1_accel_to_send)+",F,0.0,0.0,0.0>")
-        self.settings.append("<SETTING,DELTA,1,"+str(self.p1_setup_jog_delta_to_send)+",F,0.0,0.0,0.0>")
 
         self.settings.append("<SETTING,SPEED,2,"+str(self.p2_speed_to_send)+",F,0.0,0.0,0.0>")
         self.settings.append("<SETTING,ACCEL,2,"+str(self.p2_accel_to_send)+",F,0.0,0.0,0.0>")
-        self.settings.append("<SETTING,DELTA,2,"+str(self.p2_setup_jog_delta_to_send)+",F,0.0,0.0,0.0>")
 
         self.settings.append("<SETTING,SPEED,3,"+str(self.p3_speed_to_send)+",F,0.0,0.0,0.0>")
         self.settings.append("<SETTING,ACCEL,3,"+str(self.p3_accel_to_send)+",F,0.0,0.0,0.0>")
-        self.settings.append("<SETTING,DELTA,3,"+str(self.p3_setup_jog_delta_to_send)+",F,0.0,0.0,0.0>")
 
         print("Sending all settings..")
         self.arduino.send_commands(self.settings)
@@ -849,47 +778,9 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
     IMPORTANT: These are for BD Plastic syringes ONLY!! Others will vary.
     '''
 
-
-
-
-
-    #============================
-
-
-    # TODO
-    # def display_position(self, motorID):
-    # 	if motorID == 1:
-
-    # 		seconds = 0
-    # 		p1_speed = self.p1_speed_to_send
-    # 		p1_dist = 0
-    # 		p1_time = p1_dist/p1_speed
-
-    # 		time_start = time.start()
-    # 		while self.is_p1_running:
-    # 			pass
-
-
-
-    def get_position(self):
-        ck = ""
-        x = self.serial.read()
-
-        while ord(x) != self.endMarker:
-            if ord(x) == self.midMarker:
-                print(ck)
-                ck = ""
-                x = self.serial.read()
-            ck = ck + x.decode()
-            x = self.serial.read()
-        print(ck)
-        return (ck)
-
-
-
     def closeEvent(self, event):
         try:
-            #self.global_listener_thread.stop()
+            self.global_listener_thread.ui_side_stop_button_clicked()
             self.serial.close()
             #self.threadpool.end()
 
