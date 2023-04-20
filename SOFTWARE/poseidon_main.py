@@ -50,13 +50,13 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.ui.setupUi(self)
 
         # initialize config parser module and start config load routine
-        self.config = self.load_settings()
+        self.config = self.ui_setup_load_settings_button_clicked()
 
+        # Put comments here
         # Populate drop-down UI Objects
         self.populate_microstepping()
         self.populate_syringe_sizes()
         self.populate_pump_units()
-        self.ui_setup_port_refresh_button_clicked()
 
         # Set up Syringe Channels
         self.syringe_channel_1 = SyringeChannel(self, 1)
@@ -104,49 +104,47 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
     # ===================================
     def connect_all_gui_components(self):
 
-        # ~~~~~~~~~~~~~~~
-        # SIDE STACk
-        # ~~~~~~~~~~~~~~~
+        # ~~~~~~~~~~~~~~~~~~~~~~~~
+        # SIDE : CONTROLS + NUMPAD
+        # ~~~~~~~~~~~~~~~~~~~~~~~~
 
-        # Connect the arduino motor state change callback method to the UI method
-        self.arduino.motors_changed_callback = self.ui_update_motor_state
-        self.ui.side_motors_button.clicked.connect(self.toggle_motor_state)
-        self.ui.side_stop_button.clicked.connect(self.ui_side_stop_button_clicked)
-        # TODO: connect play/pause button
+        self.arduino.motors_changed = self.motor_state_change
+        self.ui.motor_state_button.clicked.connect(self.toggle_motor_state)
 
-        # TODO: update numpad button naming to convention
-        self.ui.side_num_pad_0_button.clicked.connect(lambda: self.keystroke('0'))
-        self.ui.side_num_pad_1_button.clicked.connect(lambda: self.keystroke('1'))
-        self.ui.side_num_pad_2_button.clicked.connect(lambda: self.keystroke('2'))
-        self.ui.side_num_pad_3_button.clicked.connect(lambda: self.keystroke('3'))
-        self.ui.side_num_pad_4_button.clicked.connect(lambda: self.keystroke('4'))
-        self.ui.side_num_pad_5_button.clicked.connect(lambda: self.keystroke('5'))
-        self.ui.side_num_pad_6_button.clicked.connect(lambda: self.keystroke('6'))
-        self.ui.side_num_pad_7_button.clicked.connect(lambda: self.keystroke('7'))
-        self.ui.side_num_pad_8_button.clicked.connect(lambda: self.keystroke('8'))
-        self.ui.side_num_pad_9_button.clicked.connect(lambda: self.keystroke('9'))
-        self.ui.side_num_pad_delete_button.clicked.connect(lambda: self.keystroke('backspace'))
-        self.ui.side_num_pad_comma_button.clicked.connect(lambda: self.keystroke('.'))
-        # TODO: clear button
+        self.ui.numpad_1_BTN.clicked.connect(lambda: self.keystroke('1'))
+        self.ui.numpad_2_BTN.clicked.connect(lambda: self.keystroke('2'))
+        self.ui.numpad_3_BTN.clicked.connect(lambda: self.keystroke('3'))
+        self.ui.numpad_4_BTN.clicked.connect(lambda: self.keystroke('4'))
+        self.ui.numpad_5_BTN.clicked.connect(lambda: self.keystroke('5'))
+        self.ui.numpad_6_BTN.clicked.connect(lambda: self.keystroke('6'))
+        self.ui.numpad_7_BTN.clicked.connect(lambda: self.keystroke('7'))
+        self.ui.numpad_8_BTN.clicked.connect(lambda: self.keystroke('8'))
+        self.ui.numpad_9_BTN.clicked.connect(lambda: self.keystroke('9'))
+        self.ui.numpad_delete_BTN.clicked.connect(lambda: self.keystroke('backspace'))
+        self.ui.numpad_komma_BTN.clicked.connect(lambda: self.keystroke('.'))
+
+        # ~~~~~~~~~~~~~~~~
+        # TAB : Controller
+        # ~~~~~~~~~~~~~~~~
 
         # ~~~~~~~~~~~
         # TAB : Setup
         # ~~~~~~~~~~~
 
         # Port, first populate it then connect it (population done earlier)
+        self.ui.setup_refresh_ports_button.clicked.connect(self.refresh_ports)
+        self.ui.setup_port_input.currentIndexChanged.connect(self.ui_setup_port_input_changed)
+        self.refresh_ports()
         self.ui.setup_refresh_ports_button.clicked.connect(self.ui_setup_port_refresh_button_clicked)
         self.ui.setup_port_input.currentIndexChanged.connect(self.ui_update_config)
 
         # Set the microstepping value, default is 1
-        self.ui.microstepping_DROPDOWN.currentIndexChanged.connect(self.set_microstepping)
-
-        # Set the log file name
-        self.date_string =  datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.date_string = self.date_string.replace(":","_") # Replace semicolons with underscores
+        self.ui.setup_microstepping_input.currentIndexChanged.connect(self.ui_setup_microsteps_input_changed)
+        self.populate_microstepping()
 
         # Load and Save Settings
-        self.ui.load_settings_BTN_2.clicked.connect(self.load_settings)
-        self.ui.save_settings_BTN_2.clicked.connect(self.save_settings)
+        self.ui.setup_load_settings_button.clicked.connect(self.ui_setup_load_settings_button_clicked)
+        self.ui.setup_save_settings_button.clicked.connect(self.ui_setup_save_settings_button_clicked)
 
         # Toggle Fullscreen Mode
         self.ui.toggle_fullscreen_BTN.clicked.connect(self.toggle_fullscreen)
@@ -212,8 +210,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.ui.p3_setup_send_BTN.clicked.connect(self.send_p3_success)
 
         # Connect to arduino
-        self.ui.connect_BTN.clicked.connect(self.click_connect_button)
-        self.ui.disconnect_BTN.clicked.connect(self.click_disconnect_button)
+        self.ui.setup_connect_button.clicked.connect(self.ui_setup_connect_button_clicked)
 
         # Send all the settings at once
         self.ui.send_all_BTN.clicked.connect(self.send_all)
@@ -403,48 +400,12 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
     def jog(self, btn):
         print(f"Main> Jog Command. Forward To Arduino Object")
         self.arduino.jog(1, "F", 1)
-        # self.statusBar().showMessage("You clicked JOG")
-        # #self.serial.flushInput()
-        # testData = []
-        # active_pumps = self.get_active_pumps()
-        # if len(active_pumps) > 0:
-        #     pumps_2_run = ''.join(map(str,active_pumps))
-        #
-        #     one_jog = str(self.p1_setup_jog_delta_to_send)
-        #     two_jog = str(self.p2_setup_jog_delta_to_send)
-        #     three_jog = str(self.p3_setup_jog_delta_to_send)
-        #
-        #     if btn.text() == "Jog +":
-        #         self.statusBar().showMessage("You clicked JOG +")
-        #         f_cmd = "<RUN,DIST," + pumps_2_run +",0,F," + one_jog + "," + two_jog + "," + three_jog + ">"
-        #         testData.append(f_cmd)
-        #
-        #         print("Sending JOG command..")
-        #
-        #         thread = Thread(self.runTest, testData)
-        #         thread.finished.connect(lambda:self.thread_finished(thread))
-        #         thread.start()
-        #         print("JOG command sent.")
-        #
-        #     elif btn.text() == "Jog -":
-        #         self.statusBar().showMessage("You clicked JOG -")
-        #         b_cmd = "<RUN,DIST," + pumps_2_run +",0,B," + one_jog + "," + two_jog + "," + three_jog + ">"
-        #         testData.append(b_cmd)
-        #
-        #         print("Sending JOG command..")
-        #         thread = Thread(self.runTest, testData)
-        #         thread.finished.connect(lambda:self.thread_finished(thread))
-        #         thread.start()
-        #         print("JOG command sent.")
-        # else:
-        #     self.statusBar().showMessage("No pumps enabled.")
 
     # ======================
     # FUNCTIONS : Setup
     # ======================
 
-    def click_connect_button(self):
-        self.statusBar().showMessage("You clicked CONNECT TO CONTROLLER")
+    def ui_setup_connect_button_clicked(self):
 
         try:
             self.arduino.connect()
@@ -454,6 +415,8 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
             self.statusBar().showMessage("Cannot connect to board. Try again..")
 
         self.statusBar().showMessage("Successfully connected to board.")
+
+        self.ui.setup_connect_button.setText('Disconnect')
 
         # Change UI Button states accordingly
         self.ui.disconnect_BTN.setEnabled(True)
@@ -469,8 +432,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.arduino.disconnect()
 
         self.grey_out_components()
-        self.ui.connect_BTN.setEnabled(True)
-        self.ui.disconnect_BTN.setEnabled(False)
+        self.ui.setup_connect_button.setText('Connect')
 
 
     # Refresh the list of ports
@@ -493,54 +455,19 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
     # Set the microstepping amount from the dropdown menu
     # TODO: There is definitely a better way of updating different variables
     # after there is a change of some input from the user. need to figure out.
-    def set_microstepping(self):
-        self.microstepping = int(self.ui.microstepping_DROPDOWN.currentText())
-        self.set_p1_units()
-        self.set_p1_speed()
-        self.set_p1_accel()
-        self.set_p1_setup_jog_delta()
-        self.set_p1_amount()
+    def ui_setup_microsteps_input_changed(self):
+        # get the microsteps setting from UI and forward it to the config and arduino objects.
+        self.config['connect']['microsteps'] = int(self.ui.setup_port_input.currentText())
 
-        self.set_p2_units()
-        self.set_p2_speed()
-        self.set_p2_accel()
-        self.set_p2_setup_jog_delta()
-        self.set_p2_amount()
-
-        self.set_p3_units()
-        self.set_p3_speed()
-        self.set_p3_accel()
-        self.set_p3_setup_jog_delta()
-        self.set_p3_amount()
-
-        print(self.microstepping)
-
-    # Set the name of the log file
-    # Can probably delete
-    def set_log_file_name(self):
-        """
-        Sets the file name for the current test run, enables us to log data to the file.
-
-        Callback setter method from the 'self.ui.logFileNameInput' to set the
-        name of the log file. The log file name is of the form
-        label_Year-Month-Date hour_min_sec.txt
-        """
-        # Create a date string
-        self.date_string =  datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        # Replace semicolons with underscores
-        self.date_string = self.date_string.replace(":","_")
-        self.log_file_name = self.ui.log_file_name_INPUT.text() + "_" + self.date_string + ".png"
-
-    def load_settings(self):
+    def ui_setup_load_settings_button_clicked(self):
         return poseidon_config.PoseidonConfig.load_config()
         # populate UI with loaded settings
 
 
-    def save_settings(self):
+    def ui_setup_save_settings_button_clicked(self):
         poseidon_config.PoseidonConfig.save_config(self.config)
 
-    def toggle_fullscreen(self):
+    def ui_setup_toggle_fullscreen_button_clicked(self):
         if self.isFullScreen():
             self.showNormal()
             self.config['misc']['fullscreen'] = False
