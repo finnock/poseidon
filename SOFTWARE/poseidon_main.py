@@ -42,15 +42,15 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
 
-        # creating Arduino connection object
-        self.arduino = Arduino()
-
         # Setting the UI to a class variable and connecting all GUI Components
         self.ui = poseidon_controller_gui.Ui_MainWindow()
         self.ui.setupUi(self)
 
         # initialize config parser module and start config load routine
         self.config = self.ui_setup_load_settings_button_clicked()
+
+        # creating Arduino connection object
+        self.arduino = Arduino(self.config)
 
         # Put comments here
         # Populate drop-down UI Objects
@@ -108,20 +108,21 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         # SIDE : CONTROLS + NUMPAD
         # ~~~~~~~~~~~~~~~~~~~~~~~~
 
-        self.arduino.motors_changed = self.motor_state_change
-        self.ui.motor_state_button.clicked.connect(self.toggle_motor_state)
+        self.arduino.motors_changed = self.ui_update_motor_state
+        self.ui.side_motors_button.clicked.connect(self.ui_toggle_motor_state_clicked)
 
-        self.ui.numpad_1_BTN.clicked.connect(lambda: self.keystroke('1'))
-        self.ui.numpad_2_BTN.clicked.connect(lambda: self.keystroke('2'))
-        self.ui.numpad_3_BTN.clicked.connect(lambda: self.keystroke('3'))
-        self.ui.numpad_4_BTN.clicked.connect(lambda: self.keystroke('4'))
-        self.ui.numpad_5_BTN.clicked.connect(lambda: self.keystroke('5'))
-        self.ui.numpad_6_BTN.clicked.connect(lambda: self.keystroke('6'))
-        self.ui.numpad_7_BTN.clicked.connect(lambda: self.keystroke('7'))
-        self.ui.numpad_8_BTN.clicked.connect(lambda: self.keystroke('8'))
-        self.ui.numpad_9_BTN.clicked.connect(lambda: self.keystroke('9'))
-        self.ui.numpad_delete_BTN.clicked.connect(lambda: self.keystroke('backspace'))
-        self.ui.numpad_komma_BTN.clicked.connect(lambda: self.keystroke('.'))
+        self.ui.side_num_pad_0_button.clicked.connect(lambda: self.keystroke('0'))
+        self.ui.side_num_pad_1_button.clicked.connect(lambda: self.keystroke('1'))
+        self.ui.side_num_pad_2_button.clicked.connect(lambda: self.keystroke('2'))
+        self.ui.side_num_pad_3_button.clicked.connect(lambda: self.keystroke('3'))
+        self.ui.side_num_pad_4_button.clicked.connect(lambda: self.keystroke('4'))
+        self.ui.side_num_pad_5_button.clicked.connect(lambda: self.keystroke('5'))
+        self.ui.side_num_pad_6_button.clicked.connect(lambda: self.keystroke('6'))
+        self.ui.side_num_pad_7_button.clicked.connect(lambda: self.keystroke('7'))
+        self.ui.side_num_pad_8_button.clicked.connect(lambda: self.keystroke('8'))
+        self.ui.side_num_pad_9_button.clicked.connect(lambda: self.keystroke('9'))
+        self.ui.side_num_pad_delete_button.clicked.connect(lambda: self.keystroke('backspace'))
+        self.ui.side_num_pad_comma_button.clicked.connect(lambda: self.keystroke('.'))
 
         # ~~~~~~~~~~~~~~~~
         # TAB : Controller
@@ -132,13 +133,12 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         # ~~~~~~~~~~~
 
         # Port, first populate it then connect it (population done earlier)
-        self.ui.setup_refresh_ports_button.clicked.connect(self.refresh_ports)
-        self.ui.setup_port_input.currentIndexChanged.connect(self.ui_setup_port_input_changed)
-        self.refresh_ports()
         self.ui.setup_refresh_ports_button.clicked.connect(self.ui_setup_port_refresh_button_clicked)
-        self.ui.setup_port_input.currentIndexChanged.connect(self.ui_update_config)
+        self.ui.setup_port_input.currentIndexChanged.connect(self.ui_setup_port_input_changed)
+        # TODO: generic update function?
+        # self.ui.setup_port_input.currentIndexChanged.connect(self.ui_update_config)
 
-        # Set the microstepping value, default is 1
+        # Set the microstepping value
         self.ui.setup_microstepping_input.currentIndexChanged.connect(self.ui_setup_microsteps_input_changed)
         self.populate_microstepping()
 
@@ -147,78 +147,18 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.ui.setup_save_settings_button.clicked.connect(self.ui_setup_save_settings_button_clicked)
 
         # Toggle Fullscreen Mode
-        self.ui.toggle_fullscreen_BTN.clicked.connect(self.toggle_fullscreen)
-
-        # Px syringe size, populate then connect (population done earlier)
-        self.ui.p1_syringe_DROPDOWN.currentIndexChanged.connect(self.set_p1_syringe)
-        self.ui.p2_syringe_DROPDOWN.currentIndexChanged.connect(self.set_p2_syringe)
-        self.ui.p3_syringe_DROPDOWN.currentIndexChanged.connect(self.set_p3_syringe)
-
-        # warning to send the info to the controller
-        self.ui.p1_syringe_DROPDOWN.currentIndexChanged.connect(self.send_p1_warning)
-        self.ui.p2_syringe_DROPDOWN.currentIndexChanged.connect(self.send_p2_warning)
-        self.ui.p3_syringe_DROPDOWN.currentIndexChanged.connect(self.send_p3_warning)
-
-        # Px units
-        self.ui.p1_units_DROPDOWN.currentIndexChanged.connect(self.set_p1_units)
-        self.ui.p2_units_DROPDOWN.currentIndexChanged.connect(self.set_p2_units)
-        self.ui.p3_units_DROPDOWN.currentIndexChanged.connect(self.set_p3_units)
-
-        # warning to send the info to the controller
-        self.ui.p1_units_DROPDOWN.currentIndexChanged.connect(self.send_p1_warning)
-        self.ui.p2_units_DROPDOWN.currentIndexChanged.connect(self.send_p2_warning)
-        self.ui.p3_units_DROPDOWN.currentIndexChanged.connect(self.send_p3_warning)
-
-        # Px speed
-        self.ui.p1_speed_INPUT.valueChanged.connect(self.set_p1_speed)
-        self.ui.p2_speed_INPUT.valueChanged.connect(self.set_p2_speed)
-        self.ui.p3_speed_INPUT.valueChanged.connect(self.set_p3_speed)
-
-        # warning to send the info to the controller
-        self.ui.p1_speed_INPUT.valueChanged.connect(self.send_p1_warning)
-        self.ui.p2_speed_INPUT.valueChanged.connect(self.send_p2_warning)
-        self.ui.p3_speed_INPUT.valueChanged.connect(self.send_p3_warning)
-
-        # Px accel
-        self.ui.p1_accel_INPUT.valueChanged.connect(self.set_p1_accel)
-        self.ui.p2_accel_INPUT.valueChanged.connect(self.set_p2_accel)
-        self.ui.p3_accel_INPUT.valueChanged.connect(self.set_p3_accel)
-
-        # warning to send the info to the controller
-        self.ui.p1_accel_INPUT.valueChanged.connect(self.send_p1_warning)
-        self.ui.p2_accel_INPUT.valueChanged.connect(self.send_p2_warning)
-        self.ui.p3_accel_INPUT.valueChanged.connect(self.send_p3_warning)
-
-        # Px jog delta (setup)
-        self.ui.p1_setup_jog_delta_INPUT.currentIndexChanged.connect(self.set_p1_setup_jog_delta)
-        self.ui.p2_setup_jog_delta_INPUT.currentIndexChanged.connect(self.set_p2_setup_jog_delta)
-        self.ui.p3_setup_jog_delta_INPUT.currentIndexChanged.connect(self.set_p3_setup_jog_delta)
-
-        # warning to send the info to the contorller
-        self.ui.p1_setup_jog_delta_INPUT.currentIndexChanged.connect(self.send_p1_warning)
-        self.ui.p2_setup_jog_delta_INPUT.currentIndexChanged.connect(self.send_p2_warning)
-        self.ui.p3_setup_jog_delta_INPUT.currentIndexChanged.connect(self.send_p3_warning)
-
-        # Px send settings
-        self.ui.p1_setup_send_BTN.clicked.connect(self.send_p1_settings)
-        self.ui.p2_setup_send_BTN.clicked.connect(self.send_p2_settings)
-        self.ui.p3_setup_send_BTN.clicked.connect(self.send_p3_settings)
-
-        # remove warning to send settings
-        self.ui.p1_setup_send_BTN.clicked.connect(self.send_p1_success)
-        self.ui.p2_setup_send_BTN.clicked.connect(self.send_p2_success)
-        self.ui.p3_setup_send_BTN.clicked.connect(self.send_p3_success)
+        self.ui.setup_toggle_fullscreen_button.clicked.connect(self.ui_setup_toggle_fullscreen_button_clicked())
 
         # Connect to arduino
         self.ui.setup_connect_button.clicked.connect(self.ui_setup_connect_button_clicked)
 
         # Send all the settings at once
-        self.ui.send_all_BTN.clicked.connect(self.send_all)
+        self.ui.setup_send_all_settings_button.clicked.connect(self.send_all)
 
     def ui_update_motor_state(self):
         self.ui.side_motors_button.setChecked(self.arduino.motors_enabled)
 
-    def toggle_motor_state(self):
+    def ui_toggle_motor_state_clicked(self):
         self.arduino.toggle_motors()
 
     def send_p1_warning(self):
@@ -280,78 +220,10 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.ui.p2_setup_send_BTN.setEnabled(True)
         self.ui.p3_setup_send_BTN.setEnabled(True)
         self.ui.send_all_BTN.setEnabled(True)
+
     # ======================
     # FUNCTIONS : Controller
     # ======================
-
-    def toggle_p1_activation(self):
-        if self.ui.p1_activate_CHECKBOX.isChecked():
-            self.is_p1_active = True
-        else:
-            self.is_p1_active = False
-
-    def toggle_p2_activation(self):
-        if self.ui.p2_activate_CHECKBOX.isChecked():
-            self.is_p2_active = True
-        else:
-            self.is_p2_active = False
-
-    def toggle_p3_activation(self):
-        if self.ui.p3_activate_CHECKBOX.isChecked():
-            self.is_p3_active = True
-        else:
-            self.is_p3_active = False
-
-    # Get a list of active pumps (IDK if this is the best way to do this)
-    def get_active_pumps(self):
-        pumps_list = [self.is_p1_active, self.is_p2_active, self.is_p3_active]
-        active_pumps = [i+1 for i in range(len(pumps_list)) if pumps_list[i]]
-        return active_pumps
-
-    def display_p1_syringe(self):
-        self.ui.p1_syringe_LABEL.setText(self.ui.p1_syringe_DROPDOWN.currentText())
-
-    def display_p2_syringe(self):
-        self.ui.p2_syringe_LABEL.setText(self.ui.p2_syringe_DROPDOWN.currentText())
-
-    def display_p3_syringe(self):
-        self.ui.p3_syringe_LABEL.setText(self.ui.p3_syringe_DROPDOWN.currentText())
-
-    def display_p1_speed(self):
-        self.ui.p1_units_LABEL.setText(str(self.p1_speed) + " " + self.ui.p1_units_DROPDOWN.currentText())
-
-    def display_p2_speed(self):
-        self.ui.p2_units_LABEL.setText(str(self.p2_speed) + " " + self.ui.p2_units_DROPDOWN.currentText())
-
-    def display_p3_speed(self):
-        self.ui.p3_units_LABEL.setText(str(self.p3_speed) + " " + self.ui.p3_units_DROPDOWN.currentText())
-
-    # Set Px distance to move
-    def set_p1_amount(self):
-        self.p1_amount = self.ui.p1_amount_INPUT.value()
-
-    def set_p2_amount(self):
-        self.p2_amount = self.ui.p2_amount_INPUT.value()
-
-    def set_p3_amount(self):
-        self.p3_amount = self.ui.p3_amount_INPUT.value()
-
-    # Set Px jog delta
-    #def set_p1_jog_delta(self):
-    #	self.p1_jog_delta = self.ui.p1_jog_delta_INPUT.value()
-    #def set_p2_jog_delta(self):
-    #	self.p2_jog_delta = self.ui.p2_jog_delta_INPUT.value()
-    #def set_p3_jog_delta(self):
-    #	self.p3_jog_delta = self.ui.p3_jog_delta_INPUT.value()
-
-    # Set the coordinate system for the pump
-    def set_coordinate(self, radio):
-        if radio.text() == "Abs.":
-            if radio.isChecked():
-                self.coordinate = "absolute"
-        if radio.text() == "Incr.":
-            if radio.isChecked():
-                self.coordinate = "incremental"
 
     def run(self):
         self.statusBar().showMessage("You clicked RUN")
@@ -481,7 +353,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         microstepping_values = ['1', '2', '4', '8', '16', '32']
         self.ui.setup_microstepping_input.addItems(microstepping_values)
         self.ui.setup_microstepping_input.setCurrentText('32')
-        self.config['config']['microsteps'] = int(self.ui.setup_microstepping_input.currentText())
+        self.config['connection']['microsteps'] = int(self.ui.setup_microstepping_input.currentText())
 
     # Populate the list of possible syringes to the dropdown menus
     def populate_syringe_sizes(self):
