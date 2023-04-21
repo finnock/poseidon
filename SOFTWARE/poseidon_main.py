@@ -64,19 +64,20 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.syringe_channel_3 = SyringeChannel(self, 3)
 
         sc = self.syringe_channel_1
-        sc_config = self.config['syringe_channel_1']
-        sc.syringe_size = sc_config['size']
+        sc.syringe_size = self.config['syringe-channel-1']['size']
+        print(self.syringe_options)
+        print(sc.syringe_size)
         sc.syringe_area = self.syringe_options[sc.syringe_size]['area']
         sc.syringe_total_volume = self.syringe_options[sc.syringe_size]['volume']
 
         sc = self.syringe_channel_2
-        sc_config = self.config['syringe_channel_2']
+        sc_config = self.config['syringe-channel-2']
         sc.syringe_size = sc_config['size']
         sc.syringe_area = self.syringe_options[sc.syringe_size]['area']
         sc.syringe_total_volume = self.syringe_options[sc.syringe_size]['volume']
 
         sc = self.syringe_channel_3
-        sc_config = self.config['syringe_channel_3']
+        sc_config = self.config['syringe-channel-3']
         sc.syringe_size = sc_config['size']
         sc.syringe_area = self.syringe_options[sc.syringe_size]['area']
         sc.syringe_total_volume = self.syringe_options[sc.syringe_size]['volume']
@@ -85,7 +86,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.connect_all_gui_components()
 
         # Disable all UI Elements which cant be used as long as the Arduino is not connected
-        self.grey_out_components()
+        self.ui_disable_components_when_disconnected()
 
         # Initializing multithreading to allow parallel operations
         self.threadpool = QtCore.QThreadPool()
@@ -108,7 +109,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         # SIDE : CONTROLS + NUMPAD
         # ~~~~~~~~~~~~~~~~~~~~~~~~
 
-        self.arduino.motors_changed = self.ui_update_motor_state
+        self.arduino.motors_changed_callback = self.ui_update_motor_state
         self.ui.side_motors_button.clicked.connect(self.ui_toggle_motor_state_clicked)
 
         self.ui.side_num_pad_0_button.clicked.connect(lambda: self.keystroke('0'))
@@ -128,11 +129,23 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         # TAB : Controller
         # ~~~~~~~~~~~~~~~~
 
+        self.ui.channel_1_jog_left_button.clicked.connect(lambda: self.jog(1, "F"))
+        self.ui.channel_1_jog_right_button.clicked.connect(lambda: self.jog(1, "B"))
+        self.ui.channel_2_jog_left_button.clicked.connect(lambda: self.jog(2, "F"))
+        self.ui.channel_2_jog_right_button.clicked.connect(lambda: self.jog(2, "B"))
+        self.ui.channel_3_jog_left_button.clicked.connect(lambda: self.jog(3, "F"))
+        self.ui.channel_3_jog_right_button.clicked.connect(lambda: self.jog(3, "B"))
+
         # ~~~~~~~~~~~
         # TAB : Setup
         # ~~~~~~~~~~~
 
         # Port, first populate it then connect it (population done earlier)
+        if self.config['connection']['com-port'] == '':
+            self.ui_setup_port_refresh_button_clicked()
+        else:
+            self.ui.setup_port_input.addItem(self.config['connection']['com-port'])
+
         self.ui.setup_refresh_ports_button.clicked.connect(self.ui_setup_port_refresh_button_clicked)
         self.ui.setup_port_input.currentIndexChanged.connect(self.ui_setup_port_input_changed)
         # TODO: generic update function?
@@ -147,7 +160,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.ui.setup_save_settings_button.clicked.connect(self.ui_setup_save_settings_button_clicked)
 
         # Toggle Fullscreen Mode
-        self.ui.setup_toggle_fullscreen_button.clicked.connect(self.ui_setup_toggle_fullscreen_button_clicked())
+        self.ui.setup_toggle_fullscreen_button.clicked.connect(self.ui_setup_toggle_fullscreen_button_clicked)
 
         # Connect to arduino
         self.ui.setup_connect_button.clicked.connect(self.ui_setup_connect_button_clicked)
@@ -161,65 +174,17 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
     def ui_toggle_motor_state_clicked(self):
         self.arduino.toggle_motors()
 
-    def send_p1_warning(self):
-        self.ui.p1_setup_send_BTN.setStyleSheet("background-color: green; color: black")
+    def ui_disable_components_when_disconnected(self):
+        # get the connection state from the arduino controller
+        connected = self.arduino.connected
 
-    def send_p2_warning(self):
-        self.ui.p2_setup_send_BTN.setStyleSheet("background-color: green; color: black")
+        for button in self.ui.side_control_buttons.buttons():
+            button.setEnabled(connected)
 
-    def send_p3_warning(self):
-        self.ui.p3_setup_send_BTN.setStyleSheet("background-color: green; color: black")
+        for button in self.ui.sequence_control_buttons.buttons():
+            button.setEnabled(connected)
 
-    def send_p1_success(self):
-        self.ui.p1_setup_send_BTN.setStyleSheet("background-color: none")
-
-    def send_p2_success(self):
-        self.ui.p2_setup_send_BTN.setStyleSheet("background-color: none")
-
-    def send_p3_success(self):
-        self.ui.p3_setup_send_BTN.setStyleSheet("background-color: none")
-
-    def grey_out_components(self):
-        # ~~~~~~~~~~~~~~~~
-        # TAB : Controller
-        # ~~~~~~~~~~~~~~~~
-        self.ui.run_BTN.setEnabled(False)
-        self.ui.pause_BTN.setEnabled(False)
-        self.ui.zero_BTN.setEnabled(False)
-        self.ui.stop_BTN.setEnabled(False)
-        self.ui.jog_plus_BTN.setEnabled(False)
-        self.ui.jog_minus_BTN.setEnabled(False)
-
-        # ~~~~~~~~~~~~~~~~
-        # TAB : Setup
-        # ~~~~~~~~~~~~~~~~
-        self.ui.p1_setup_send_BTN.setEnabled(False)
-        self.ui.p2_setup_send_BTN.setEnabled(False)
-        self.ui.p3_setup_send_BTN.setEnabled(False)
-        self.ui.send_all_BTN.setEnabled(False)
-
-    def ungrey_out_components(self):
-        # ~~~~~~~~~~~~~~~~
-        # TAB : Controller
-        # ~~~~~~~~~~~~~~~~
-        self.ui.run_BTN.setEnabled(True)
-        self.ui.pause_BTN.setEnabled(True)
-        self.ui.zero_BTN.setEnabled(True)
-        self.ui.stop_BTN.setEnabled(True)
-        self.ui.jog_plus_BTN.setEnabled(True)
-        self.ui.jog_minus_BTN.setEnabled(True)
-
-        self.ui.run_BTN.setStyleSheet("background-color: green; color: black")
-        self.ui.pause_BTN.setStyleSheet("background-color: yellow; color: black")
-        self.ui.stop_BTN.setStyleSheet("background-color: red; color: black")
-
-        # ~~~~~~~~~~~~~~~~
-        # TAB : Setup
-        # ~~~~~~~~~~~~~~~~
-        self.ui.p1_setup_send_BTN.setEnabled(True)
-        self.ui.p2_setup_send_BTN.setEnabled(True)
-        self.ui.p3_setup_send_BTN.setEnabled(True)
-        self.ui.send_all_BTN.setEnabled(True)
+        self.ui.setup_send_all_settings_button.setEnabled(connected)
 
     # ======================
     # FUNCTIONS : Controller
@@ -269,43 +234,42 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.statusBar().showMessage("All motors halted")
         self.arduino.stop_movement()
 
-    def jog(self, btn):
+    def jog(self, channel, direction):
         print(f"Main> Jog Command. Forward To Arduino Object")
-        self.arduino.jog(1, "F", 1)
+        # TODO: calculate distance dynamically
+        distance = 1
+        self.arduino.jog(channel, direction, distance)
 
     # ======================
     # FUNCTIONS : Setup
     # ======================
 
     def ui_setup_connect_button_clicked(self):
+        if not self.arduino.connected:
+            try:
+                self.arduino.connect()
+            except AttributeError:
+                self.statusBar().showMessage("Please plug in the board and select a proper port, then press connect.")
+            except CannotConnectException:
+                self.statusBar().showMessage("Cannot connect to board. Try again..")
 
-        try:
-            self.arduino.connect()
-        except AttributeError:
-            self.statusBar().showMessage("Please plug in the board and select a proper port, then press connect.")
-        except CannotConnectException:
-            self.statusBar().showMessage("Cannot connect to board. Try again..")
+            self.statusBar().showMessage("Successfully connected to board.")
 
-        self.statusBar().showMessage("Successfully connected to board.")
+            self.ui.setup_connect_button.setText('Disconnect')
+        else:
+            self.arduino.disconnect()
+            self.ui.setup_connect_button.setText('Connect')
+            self.statusBar().showMessage("Successfully disconnected from board.")
 
-        self.ui.setup_connect_button.setText('Disconnect')
-
-        # Change UI Button states accordingly
-        self.ui.disconnect_BTN.setEnabled(True)
-        self.ui.p1_setup_send_BTN.setEnabled(True)
-        self.ui.p2_setup_send_BTN.setEnabled(True)
-        self.ui.p3_setup_send_BTN.setEnabled(True)
-        self.ui.send_all_BTN.setEnabled(True)
-        self.ui.connect_BTN.setEnabled(False)
+        self.ui_disable_components_when_disconnected()
 
     def click_disconnect_button(self):
         self.statusBar().showMessage("You clicked DISCONNECT FROM BOARD")
 
         self.arduino.disconnect()
 
-        self.grey_out_components()
+        self.ui_disable_components_when_disconnected()
         self.ui.setup_connect_button.setText('Connect')
-
 
     # Refresh the list of ports
     def ui_setup_port_refresh_button_clicked(self):
@@ -316,20 +280,23 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         # TODO: findout if the manual trigger is necessary
         self.ui.setup_port_input.clear()
         self.ui.setup_port_input.addItems(ports)
-        # TODO: check if port from config is found in port list
-        # otherwise set to first port from list
-        self.ui.setup_port_input.setCurrentText(self.config['setup']['port'])
+        config_port = self.config['connection']['com-port']
+        if config_port in ports:
+            self.ui.setup_port_input.setCurrentText(config_port)
+        else:
+            self.ui.setup_port_input.setCurrentText(ports[0])
+
 
     def ui_setup_port_input_changed(self):
         # get the port from UI and forward it to the config and arduino objects.
-        self.config['connect']['port'] = self.ui.setup_port_input.currentText()
+        self.config['connection']['com-port'] = self.ui.setup_port_input.currentText()
 
     # Set the microstepping amount from the dropdown menu
     # TODO: There is definitely a better way of updating different variables
     # after there is a change of some input from the user. need to figure out.
     def ui_setup_microsteps_input_changed(self):
         # get the microsteps setting from UI and forward it to the config and arduino objects.
-        self.config['connect']['microsteps'] = int(self.ui.setup_port_input.currentText())
+        self.config['connect']['microsteps'] = self.ui.setup_port_input.currentText()
 
     def ui_setup_load_settings_button_clicked(self):
         return poseidon_config.PoseidonConfig.load_config()
@@ -342,10 +309,10 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
     def ui_setup_toggle_fullscreen_button_clicked(self):
         if self.isFullScreen():
             self.showNormal()
-            self.config['misc']['fullscreen'] = False
+            self.config['misc']['fullscreen'] = str(False)
         else:
             self.showFullScreen()
-            self.config['misc']['fullscreen'] = True
+            self.config['misc']['fullscreen'] = str(False)
 
 
     # Populate the microstepping amounts for the dropdown menu
@@ -353,7 +320,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         microstepping_values = ['1', '2', '4', '8', '16', '32']
         self.ui.setup_microstepping_input.addItems(microstepping_values)
         self.ui.setup_microstepping_input.setCurrentText('32')
-        self.config['connection']['microsteps'] = int(self.ui.setup_microstepping_input.currentText())
+        self.config['connection']['microsteps'] = self.ui.setup_microstepping_input.currentText()
 
     # Populate the list of possible syringes to the dropdown menus
     def populate_syringe_sizes(self):
@@ -579,8 +546,8 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 
     def closeEvent(self, event):
         try:
-            self.global_listener_thread.ui_side_stop_button_clicked()
-            self.serial.close()
+            if self.arduino.connected:
+                self.arduino.disconnect()
             #self.threadpool.end()
 
         except AttributeError:

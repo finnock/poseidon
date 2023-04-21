@@ -146,6 +146,9 @@
                  <property name="text">
                   <string>0</string>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
                <item>
@@ -176,6 +179,9 @@
                  <property name="flat">
                   <bool>false</bool>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
                <item>
@@ -240,6 +246,9 @@
                  <property name="text">
                   <string>&gt;</string>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
                <item>
@@ -273,6 +282,9 @@
                  <property name="text">
                   <string>&gt;|</string>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
               </layout>
@@ -293,6 +305,9 @@
                  <property name="text">
                   <string>1st</string>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
                <item>
@@ -581,6 +596,9 @@
                  <property name="text">
                   <string>0</string>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
                <item>
@@ -611,6 +629,9 @@
                  <property name="flat">
                   <bool>false</bool>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
                <item>
@@ -669,6 +690,9 @@
                  <property name="text">
                   <string>&gt;</string>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
                <item>
@@ -702,6 +726,9 @@
                  <property name="text">
                   <string>&gt;|</string>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
               </layout>
@@ -722,6 +749,9 @@
                  <property name="text">
                   <string>2nd</string>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
                <item>
@@ -1010,6 +1040,9 @@
                  <property name="text">
                   <string>0</string>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
                <item>
@@ -1040,6 +1073,9 @@
                  <property name="flat">
                   <bool>false</bool>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
                <item>
@@ -1098,6 +1134,9 @@
                  <property name="text">
                   <string>&gt;</string>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
                <item>
@@ -1131,6 +1170,9 @@
                  <property name="text">
                   <string>&gt;|</string>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
               </layout>
@@ -1151,6 +1193,9 @@
                  <property name="text">
                   <string>3rd</string>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
                <item>
@@ -1548,13 +1593,6 @@
                </property>
               </widget>
              </item>
-             <item>
-              <widget class="QPushButton" name="setup_channel_1_send_settings_button">
-               <property name="text">
-                <string>Send</string>
-               </property>
-              </widget>
-             </item>
             </layout>
            </widget>
           </item>
@@ -1581,13 +1619,6 @@
                </property>
               </widget>
              </item>
-             <item>
-              <widget class="QPushButton" name="setup_channel_2_send_settings_button">
-               <property name="text">
-                <string>Send</string>
-               </property>
-              </widget>
-             </item>
             </layout>
            </widget>
           </item>
@@ -1611,13 +1642,6 @@
               <widget class="QDoubleSpinBox" name="setup_channel_3_accel_input">
                <property name="maximum">
                 <double>99999.990000000005239</double>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="setup_channel_3_send_settings_button">
-               <property name="text">
-                <string>Send</string>
                </property>
               </widget>
              </item>
@@ -1745,6 +1769,9 @@ asd
           <height>64</height>
          </size>
         </property>
+        <attribute name="buttonGroup">
+         <string notr="true">side_control_buttons</string>
+        </attribute>
        </widget>
       </item>
       <item>
@@ -1774,6 +1801,9 @@ asd
             <height>40</height>
            </size>
           </property>
+          <attribute name="buttonGroup">
+           <string notr="true">side_control_buttons</string>
+          </attribute>
          </widget>
         </item>
         <item>
@@ -1805,6 +1835,9 @@ asd
           <property name="checked">
            <bool>false</bool>
           </property>
+          <attribute name="buttonGroup">
+           <string notr="true">side_control_buttons</string>
+          </attribute>
          </widget>
         </item>
        </layout>
@@ -2453,4 +2486,8 @@ asd
  </widget>
  <resources/>
  <connections/>
+ <buttongroups>
+  <buttongroup name="sequence_control_buttons"/>
+  <buttongroup name="side_control_buttons"/>
+ </buttongroups>
 </ui>
