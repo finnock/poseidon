@@ -10,6 +10,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog
 import pyautogui
+from qt_material import *
 import configparser
 
 import numpy as np
@@ -39,8 +40,12 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
     # =======================================================
     # INITIALIZING : The UI and setting some needed variables
     # =======================================================
-    def __init__(self):
+    def __init__(self, app):
         super(MainWindow, self).__init__()
+        self.app = app
+        apply_stylesheet(self.app, theme="custom_dark_red.xml", extra={
+            'density_scale': '0'
+        })
 
         # Setting the UI to a class variable and connecting all GUI Components
         self.ui = poseidon_controller_gui.Ui_MainWindow()
@@ -48,6 +53,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 
         # initialize config parser module and start config load routine
         self.config = self.ui_setup_load_settings_button_clicked()
+
 
         # creating Arduino connection object
         self.arduino = Arduino(self.config)
@@ -558,7 +564,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 def main():
     # a new app instance
     app = QtWidgets.QApplication(sys.argv)
-    window = MainWindow()
+    window = MainWindow(app)
     window.setWindowTitle("Poseidon Pumps Controller - Fischer Lab Fork 2023")
     window.show()
     # without this, the script exits immediately.
