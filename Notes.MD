@@ -1,5 +1,17 @@
 ## Notes
 
+### TODO
+
+Todo list in priority order
+
+    [ ] Calculate jog speed and distance from inputs
+    [ ] Change FW move command to accept distance and speed simmu
+    [ ] Sequence -> Calculate speed + distance from volume inputs
+    [ ] Maximum speed in FW
+    [ ] Position feedback from FW
+    [ ] UI Buttons (Symbols for jog, move etc)
+    [ ] Icons for motors, start stop etc
+
 ### Motors
 
 Motor speed is limited by clockspeed of the compiler. The current Firmware checks EVERY step in the while loop for new commands from the PC.

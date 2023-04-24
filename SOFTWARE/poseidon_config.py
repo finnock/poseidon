@@ -12,6 +12,7 @@ class PoseidonConfig:
         config['connection'] = {
             'com-port': '',
             'baudrate': 230400,
+            # TODO: move from connection to misc
             'microsteps': 32,
             'auto-connect': False
         }
@@ -20,6 +21,9 @@ class PoseidonConfig:
             'fullscreen': False,
             'jog-distance': 10,
             'jog-speed': 10,
+            'mm-per-rotation': 2,
+            'steps-per-rotation': 200,
+            'microsteps': 32
         }
 
         config['syringe-channel-1'] = {

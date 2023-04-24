@@ -1,4 +1,77 @@
-## Commands to Arduino
+## New Commands to Arduino
+
+### Overview
+
+No settings are stored to the arduino (unless we find a way to save permanently).
+All infos needed for the operation are transported directly with the command.
+
+ - `MOVE`: Move
+ - `ENABLE`: Enable Motors
+ - `DISABLE`: Disable Motors
+ - `STOP`: Stop all motor movement
+ - `PAUSE`: Pause all motor movement
+ - `RESUME`: Resume all motor movement
+ - `POSITION`: Set or Receive positional information
+
+### MOVE
+
+```
+MOVE c<CHANNEL#> d<STEPS> s<SPEED> a<ACCEL>
+
+# Example:
+MOVE c2 d284 s183.5 a5.0
+```
+
+ - `CHANNEL#`: Channel number, either `1`, `2` or `3`
+ - `STEPS`: Number of steps the motor should move. 
+            Has to be `int` and can be negative or positive
+ - `SPEED`: Speed with which the motor should move, given as steps/second as floating point.
+            Has to be positive and nonzero.
+ - `ACCEL`: Acceleration given in steps/second² as floating point. Has to be positive and nonzero.
+
+### ENABLE
+
+```
+ENABLE
+```
+
+No further arguments. Enables all motors.
+
+### DISABLE
+
+```
+DISABLE
+```
+
+No further arguments. Disables all motors.
+
+### STOP
+
+```
+STOP [c<CHANNEL#>]
+```
+
+ - optional `CHANNEL#`: The channel number which should be stopped.
+
+If no channel is provided, all channels will be stopped. This will delete all "pause" information.
+
+### PAUSE
+
+```
+PAUSE
+```
+
+No further arguments. Pauses all movement.
+
+### RESUME
+
+```
+RESUME
+```
+
+No further arguments. Disables all motors.
+
+## Poseidon Commands to Arduino
 
 ### Run Motors with given steps
 

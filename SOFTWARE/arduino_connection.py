@@ -143,7 +143,7 @@ class Arduino:
     # Expose motor functionality to software on API level
     # #########################################################
 
-    def jog(self, motor_channel, direction, distance):
+    def jog(self, motor_channel, direction, distance_in_mm, speed_in_mm_per_s):
         """ Jogs the given channel in a given direction and distance
 
         Parameters
@@ -152,13 +152,17 @@ class Arduino:
             The channel which should be manipulated (1..3)
         direction : string
             The direction in which the motor should be moved. 1 for FORWARD, 0 for BACKWARD.
-        distance : float
+        distance_in_mm : float
             The distance by which the motor should be moved, given in mm.
         """
 
         distances = [0.0, 0.0, 0.0]
-        distances[motor_channel - 1] = distance * 100 * int(self.config['connection']['microsteps'])
+        mm_per_rotation = self.config['misc']['mm-per-rotation']
+        steps_per_rotation = self.config['misc']['steps-per-rotation']
+        microsteps_per_step = self.config['misc']['microsteps']
+        distances[motor_channel - 1] = distance_in_mm / mm_per_rotation * steps_per_rotation * microsteps_per_step
 
+        # TODO: Add speed setting change and waiter? thread?
         self.send_manual_arduino_command('RUN', 'DIST', motor_channel, 1, direction, distances)
 
     def enable_motors(self):

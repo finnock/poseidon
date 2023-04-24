@@ -1495,7 +1495,7 @@
              </font>
             </property>
             <property name="text">
-             <string>mm | </string>
+             <string>mm | Speed:      </string>
             </property>
            </widget>
           </item>
@@ -2717,7 +2717,7 @@ asd
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="side_control_buttons"/>
   <buttongroup name="sequence_control_buttons"/>
+  <buttongroup name="side_control_buttons"/>
  </buttongroups>
 </ui>

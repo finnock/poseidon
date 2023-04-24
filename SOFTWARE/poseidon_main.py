@@ -242,9 +242,11 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 
     def jog(self, channel, direction):
         print(f"Main> Jog Command. Forward To Arduino Object")
-        # TODO: calculate distance dynamically
-        distance = 1
-        self.arduino.jog(channel, direction, distance)
+
+        jog_distance = self.ui.jog_delta_input.value()
+        jog_speed = self.ui.jog_delta_speed_input.value()
+
+        self.arduino.jog(channel, direction, jog_distance, jog_speed)
 
     # ======================
     # FUNCTIONS : Setup
