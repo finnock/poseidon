@@ -60,19 +60,17 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 
         # Put comments here
         # Populate drop-down UI Objects
-        self.populate_microstepping()
         self.populate_syringe_sizes()
         self.populate_pump_units()
 
         # Set up Syringe Channels
-        self.syringe_channel_1 = SyringeChannel(self, 1)
-        self.syringe_channel_2 = SyringeChannel(self, 2)
-        self.syringe_channel_3 = SyringeChannel(self, 3)
+        self.syringe_channel_1 = SyringeChannel(self, 1, self.config)
+        self.syringe_channel_2 = SyringeChannel(self, 2, self.config)
+        self.syringe_channel_3 = SyringeChannel(self, 3, self.config)
+        self.syringes = [self.syringe_channel_1, self.syringe_channel_2, self.syringe_channel_3]
 
         sc = self.syringe_channel_1
         sc.syringe_size = self.config['syringe-channel-1']['size']
-        print(self.syringe_options)
-        print(sc.syringe_size)
         sc.syringe_area = self.syringe_options[sc.syringe_size]['area']
         sc.syringe_total_volume = self.syringe_options[sc.syringe_size]['volume']
 
@@ -97,6 +95,9 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         # Initializing multithreading to allow parallel operations
         self.threadpool = QtCore.QThreadPool()
         print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
+
+        if bool(self.config['connection']['auto-connect']):
+            self.ui_setup_connect_button_clicked()
 
     def keystroke(self, key):
         pyautogui.press(key)
@@ -141,6 +142,10 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.ui.channel_2_jog_right_button.clicked.connect(lambda: self.jog(2, "B"))
         self.ui.channel_3_jog_left_button.clicked.connect(lambda: self.jog(3, "F"))
         self.ui.channel_3_jog_right_button.clicked.connect(lambda: self.jog(3, "B"))
+
+        self.ui.channel_1_end_button.clicked.connect(lambda: self.run(1))
+        self.ui.channel_2_end_button.clicked.connect(lambda: self.run(2))
+        self.ui.channel_3_end_button.clicked.connect(lambda: self.run(3))
 
         # ~~~~~~~~~~~
         # TAB : Setup
@@ -196,30 +201,22 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
     # FUNCTIONS : Controller
     # ======================
 
-    def run(self):
-        self.statusBar().showMessage("You clicked RUN")
-        testData = []
+    def run(self, channel):
+        syringe = self.syringes[channel - 1]
 
-        active_pumps = self.get_active_pumps()
-        if len(active_pumps) > 0:
+        # get run distance in mm from SC Object
+        run_distance, run_speed = syringe.get_run_parameters()
+        print(f"{(run_distance, run_speed)=}")
 
-            p1_input_displacement = str(self.convert_displacement(self.p1_amount, self.p1_units, self.p1_syringe_area, self.microstepping))
-            p2_input_displacement = str(self.convert_displacement(self.p2_amount, self.p2_units, self.p2_syringe_area, self.microstepping))
-            p3_input_displacement = str(self.convert_displacement(self.p3_amount, self.p3_units, self.p3_syringe_area, self.microstepping))
+        self.arduino.jog(channel, 'F', run_distance, run_speed)
 
-            pumps_2_run = ''.join(map(str,active_pumps))
+    def jog(self, channel, direction):
+        print(f"Main> Jog Command. Forward To Arduino Object")
 
-            cmd = "<RUN,DIST,"+pumps_2_run+",0.0,F," + p1_input_displacement + "," + p2_input_displacement + "," + p3_input_displacement + ">"
+        jog_distance = self.ui.jog_delta_input.value()
+        jog_speed = self.ui.jog_delta_speed_input.value()
 
-            testData.append(cmd)
-
-            print("Sending RUN command..")
-            thread = Thread(self.runTest, testData)
-            thread.finished.connect(lambda:self.thread_finished(thread))
-            thread.start()
-            print("RUN command sent.")
-        else:
-            self.statusBar().showMessage("No pumps enabled.")
+        self.arduino.jog(channel, direction, jog_distance, jog_speed)
 
 
     # fix
@@ -239,14 +236,6 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
     def ui_side_stop_button_clicked(self):
         self.statusBar().showMessage("All motors halted")
         self.arduino.stop_movement()
-
-    def jog(self, channel, direction):
-        print(f"Main> Jog Command. Forward To Arduino Object")
-
-        jog_distance = self.ui.jog_delta_input.value()
-        jog_speed = self.ui.jog_delta_speed_input.value()
-
-        self.arduino.jog(channel, direction, jog_distance, jog_speed)
 
     # ======================
     # FUNCTIONS : Setup
@@ -304,7 +293,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
     # after there is a change of some input from the user. need to figure out.
     def ui_setup_microsteps_input_changed(self):
         # get the microsteps setting from UI and forward it to the config and arduino objects.
-        self.config['connect']['microsteps'] = self.ui.setup_port_input.currentText()
+        self.config['misc']['microsteps'] = self.ui.setup_microstepping_input.currentText()
 
     def ui_setup_load_settings_button_clicked(self):
         return poseidon_config.PoseidonConfig.load_config()
@@ -328,7 +317,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         microstepping_values = ['1', '2', '4', '8', '16', '32']
         self.ui.setup_microstepping_input.addItems(microstepping_values)
         self.ui.setup_microstepping_input.setCurrentText('32')
-        self.config['connection']['microsteps'] = self.ui.setup_microstepping_input.currentText()
+        self.config['misc']['microsteps'] = self.ui.setup_microstepping_input.currentText()
 
     # Populate the list of possible syringes to the dropdown menus
     def populate_syringe_sizes(self):

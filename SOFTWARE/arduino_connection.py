@@ -118,7 +118,7 @@ class Arduino:
             # Short sleep time for serial connection to reset
             time.sleep(0.1)
 
-        print("Arduino> Send and receive complete\n\n")
+        print("Arduino> Send complete\n\n")
 
     def thread_finished_helper(self, thread):
         thread.stop()
@@ -128,6 +128,10 @@ class Arduino:
         command = f"<{operation},{operation_type},{motors},{value},{direction},{steps[0]},{steps[1]},{steps[2]}>"
         print(f"Arduino> Executing: {command}")
         self.send_commands([command])
+
+    def return_manual_arduino_command(self, operation, operation_type, motors, value, direction, steps):
+        command = f"<{operation},{operation_type},{motors},{value},{direction},{steps[0]},{steps[1]},{steps[2]}>"
+        return command
 
     def serial_listener(self):
         while self.global_listener_thread.runs:
@@ -157,13 +161,16 @@ class Arduino:
         """
 
         distances = [0.0, 0.0, 0.0]
-        mm_per_rotation = self.config['misc']['mm-per-rotation']
-        steps_per_rotation = self.config['misc']['steps-per-rotation']
-        microsteps_per_step = self.config['misc']['microsteps']
+        mm_per_rotation = float(self.config['misc']['mm-per-rotation'])
+        steps_per_rotation = float(self.config['misc']['steps-per-rotation'])
+        microsteps_per_step = float(self.config['misc']['microsteps'])
         distances[motor_channel - 1] = distance_in_mm / mm_per_rotation * steps_per_rotation * microsteps_per_step
+        speed = speed_in_mm_per_s / mm_per_rotation * steps_per_rotation * microsteps_per_step
 
         # TODO: Add speed setting change and waiter? thread?
-        self.send_manual_arduino_command('RUN', 'DIST', motor_channel, 1, direction, distances)
+        speed_command = self.return_manual_arduino_command('SETTING', 'SPEED', motor_channel, speed, 'F', [0,0,0])
+        jog_command = self.return_manual_arduino_command('RUN', 'DIST', motor_channel, 1, direction, distances)
+        self.send_commands([speed_command, jog_command])
 
     def enable_motors(self):
         """ Enables all motors """
