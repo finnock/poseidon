@@ -369,7 +369,7 @@
                   <number>1</number>
                  </property>
                  <property name="digitCount">
-                  <number>3</number>
+                  <number>4</number>
                  </property>
                  <property name="segmentStyle">
                   <enum>QLCDNumber::Flat</enum>
@@ -426,7 +426,7 @@
                   <number>1</number>
                  </property>
                  <property name="digitCount">
-                  <number>3</number>
+                  <number>4</number>
                  </property>
                  <property name="segmentStyle">
                   <enum>QLCDNumber::Flat</enum>
@@ -465,7 +465,7 @@
                   <enum>QFrame::StyledPanel</enum>
                  </property>
                  <property name="digitCount">
-                  <number>3</number>
+                  <number>4</number>
                  </property>
                  <property name="segmentStyle">
                   <enum>QLCDNumber::Flat</enum>
@@ -884,7 +884,7 @@
                   <number>1</number>
                  </property>
                  <property name="digitCount">
-                  <number>3</number>
+                  <number>4</number>
                  </property>
                  <property name="segmentStyle">
                   <enum>QLCDNumber::Flat</enum>
@@ -941,7 +941,7 @@
                   <number>1</number>
                  </property>
                  <property name="digitCount">
-                  <number>3</number>
+                  <number>4</number>
                  </property>
                  <property name="segmentStyle">
                   <enum>QLCDNumber::Flat</enum>
@@ -980,7 +980,7 @@
                   <enum>QFrame::StyledPanel</enum>
                  </property>
                  <property name="digitCount">
-                  <number>3</number>
+                  <number>4</number>
                  </property>
                  <property name="segmentStyle">
                   <enum>QLCDNumber::Flat</enum>
@@ -1408,7 +1408,7 @@
                   <number>1</number>
                  </property>
                  <property name="digitCount">
-                  <number>3</number>
+                  <number>4</number>
                  </property>
                  <property name="segmentStyle">
                   <enum>QLCDNumber::Flat</enum>
@@ -1465,7 +1465,7 @@
                   <number>1</number>
                  </property>
                  <property name="digitCount">
-                  <number>3</number>
+                  <number>4</number>
                  </property>
                  <property name="segmentStyle">
                   <enum>QLCDNumber::Flat</enum>
@@ -1504,7 +1504,7 @@
                   <enum>QFrame::StyledPanel</enum>
                  </property>
                  <property name="digitCount">
-                  <number>3</number>
+                  <number>4</number>
                  </property>
                  <property name="segmentStyle">
                   <enum>QLCDNumber::Flat</enum>
@@ -2864,7 +2864,7 @@ asd
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="side_control_buttons"/>
   <buttongroup name="sequence_control_buttons"/>
+  <buttongroup name="side_control_buttons"/>
  </buttongroups>
 </ui>

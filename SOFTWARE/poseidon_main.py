@@ -85,7 +85,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.threadpool = QtCore.QThreadPool()
         print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
 
-        if bool(self.config['connection']['auto-connect']):
+        if self.config['connection']['auto-connect'] == 'True':
             self.ui_setup_connect_button_clicked()
 
     def keystroke(self, key):
@@ -214,7 +214,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         run_distance, run_speed = syringe.get_run_parameters()
         print(f"{(run_distance, run_speed)=}")
         lcds = [self.ui.channel_1_speed_lcd, self.ui.channel_2_speed_lcd, self.ui.channel_3_speed_lcd]
-        lcds[channel - 1].set
+        lcds[channel - 1].display('{:.2f}'.format(run_speed))
 
         self.arduino.jog(channel, 'F', run_distance, run_speed)
 
@@ -223,6 +223,9 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 
         jog_distance = self.ui.jog_delta_input.value()
         jog_speed = self.ui.jog_delta_speed_input.value()
+
+        lcds = [self.ui.channel_1_speed_lcd, self.ui.channel_2_speed_lcd, self.ui.channel_3_speed_lcd]
+        lcds[channel - 1].display(f"{jog_speed}")
 
         self.arduino.jog(channel, direction, jog_distance, jog_speed)
 
