@@ -12,8 +12,6 @@ class PoseidonConfig:
         config['connection'] = {
             'com-port': '',
             'baudrate': 230400,
-            # TODO: move from connection to misc
-            'microsteps': 32,
             'auto-connect': False
         }
 

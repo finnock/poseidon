@@ -69,22 +69,11 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.syringe_channel_3 = SyringeChannel(self, 3, self.config)
         self.syringes = [self.syringe_channel_1, self.syringe_channel_2, self.syringe_channel_3]
 
-        sc = self.syringe_channel_1
-        sc.syringe_size = self.config['syringe-channel-1']['size']
-        sc.syringe_area = self.syringe_options[sc.syringe_size]['area']
-        sc.syringe_total_volume = self.syringe_options[sc.syringe_size]['volume']
-
-        sc = self.syringe_channel_2
-        sc_config = self.config['syringe-channel-2']
-        sc.syringe_size = sc_config['size']
-        sc.syringe_area = self.syringe_options[sc.syringe_size]['area']
-        sc.syringe_total_volume = self.syringe_options[sc.syringe_size]['volume']
-
-        sc = self.syringe_channel_3
-        sc_config = self.config['syringe-channel-3']
-        sc.syringe_size = sc_config['size']
-        sc.syringe_area = self.syringe_options[sc.syringe_size]['area']
-        sc.syringe_total_volume = self.syringe_options[sc.syringe_size]['volume']
+        for channel_number in [1, 2, 3]:
+            sc = self.syringes[channel_number - 1]
+            sc.syringe_size = self.config[f"syringe-channel-{channel_number}"]['size']
+            sc.syringe_area = self.syringe_options[sc.syringe_size]['area']
+            sc.syringe_total_volume = self.syringe_options[sc.syringe_size]['volume']
 
         # Connect all UI Objects to the necessary functions
         self.connect_all_gui_components()
@@ -147,6 +136,23 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.ui.channel_2_end_button.clicked.connect(lambda: self.run(2))
         self.ui.channel_3_end_button.clicked.connect(lambda: self.run(3))
 
+        for vol_input, spd_input, sc in [
+            (self.ui.channel_1_volume_input, self.ui.channel_1_speed_input, self.syringe_channel_1),
+            (self.ui.channel_2_volume_input, self.ui.channel_2_speed_input, self.syringe_channel_2),
+            (self.ui.channel_3_volume_input, self.ui.channel_3_speed_input, self.syringe_channel_3),
+        ]:
+            syringe_option = self.syringe_options[sc.syringe_size]
+
+            vol_input.setDecimals(syringe_option['volume-decimals'])
+            vol_input.setMaximum(syringe_option['volume-maximum'])
+            vol_input.setSingleStep(syringe_option['volume-step'])
+            vol_input.setValue(float(self.config[f"syringe-channel-{sc.channel_number}"]['volume']))
+
+            spd_input.setDecimals(syringe_option['speed-decimals'])
+            spd_input.setMaximum(syringe_option['speed-maximum'])
+            spd_input.setSingleStep(syringe_option['speed-step'])
+            spd_input.setValue(float(self.config[f"syringe-channel-{sc.channel_number}"]['speed']))
+
         # ~~~~~~~~~~~
         # TAB : Setup
         # ~~~~~~~~~~~
@@ -207,6 +213,8 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         # get run distance in mm from SC Object
         run_distance, run_speed = syringe.get_run_parameters()
         print(f"{(run_distance, run_speed)=}")
+        lcds = [self.ui.channel_1_speed_lcd, self.ui.channel_2_speed_lcd, self.ui.channel_3_speed_lcd]
+        lcds[channel - 1].set
 
         self.arduino.jog(channel, 'F', run_distance, run_speed)
 
@@ -328,6 +336,12 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
             '500 mL': {
                 'volume': '500',
                 'area': 3631.681168,
+                'volume-decimals': 0,
+                'volume-maximum': 550,
+                'volume-step': 1,
+                'speed-decimals': 0,
+                'speed-maximum': 9999,
+                'speed-step': 1
             }
         }
 

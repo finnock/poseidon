@@ -348,9 +348,15 @@
                  <property name="enabled">
                   <bool>true</bool>
                  </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>50</width>
+                   <height>50</height>
+                  </size>
+                 </property>
                  <property name="font">
                   <font>
-                   <pointsize>12</pointsize>
+                   <pointsize>15</pointsize>
                   </font>
                  </property>
                  <property name="frameShape">
@@ -399,9 +405,15 @@
                </item>
                <item>
                 <widget class="QLCDNumber" name="channel_1_rem_lcd">
+                 <property name="maximumSize">
+                  <size>
+                   <width>50</width>
+                   <height>50</height>
+                  </size>
+                 </property>
                  <property name="font">
                   <font>
-                   <pointsize>12</pointsize>
+                   <pointsize>15</pointsize>
                   </font>
                  </property>
                  <property name="frameShape">
@@ -432,7 +444,41 @@
                   </font>
                  </property>
                  <property name="text">
-                  <string>ml</string>
+                  <string>ml | Speed</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLCDNumber" name="channel_1_speed_lcd">
+                 <property name="maximumSize">
+                  <size>
+                   <width>50</width>
+                   <height>50</height>
+                  </size>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>15</pointsize>
+                  </font>
+                 </property>
+                 <property name="frameShape">
+                  <enum>QFrame::StyledPanel</enum>
+                 </property>
+                 <property name="digitCount">
+                  <number>3</number>
+                 </property>
+                 <property name="segmentStyle">
+                  <enum>QLCDNumber::Flat</enum>
+                 </property>
+                 <property name="value" stdset="0">
+                  <double>0.000000000000000</double>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="channel_1_speed_fb_label">
+                 <property name="text">
+                  <string>mm/s</string>
                  </property>
                 </widget>
                </item>
@@ -817,9 +863,15 @@
                  <property name="enabled">
                   <bool>true</bool>
                  </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>50</width>
+                   <height>50</height>
+                  </size>
+                 </property>
                  <property name="font">
                   <font>
-                   <pointsize>12</pointsize>
+                   <pointsize>15</pointsize>
                   </font>
                  </property>
                  <property name="frameShape">
@@ -868,9 +920,15 @@
                </item>
                <item>
                 <widget class="QLCDNumber" name="channel_2_rem_lcd">
+                 <property name="maximumSize">
+                  <size>
+                   <width>50</width>
+                   <height>50</height>
+                  </size>
+                 </property>
                  <property name="font">
                   <font>
-                   <pointsize>12</pointsize>
+                   <pointsize>15</pointsize>
                   </font>
                  </property>
                  <property name="frameShape">
@@ -901,7 +959,38 @@
                   </font>
                  </property>
                  <property name="text">
-                  <string>ml</string>
+                  <string>ml | Speed</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLCDNumber" name="channel_2_speed_lcd">
+                 <property name="maximumSize">
+                  <size>
+                   <width>50</width>
+                   <height>50</height>
+                  </size>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>15</pointsize>
+                  </font>
+                 </property>
+                 <property name="frameShape">
+                  <enum>QFrame::StyledPanel</enum>
+                 </property>
+                 <property name="digitCount">
+                  <number>3</number>
+                 </property>
+                 <property name="segmentStyle">
+                  <enum>QLCDNumber::Flat</enum>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="channel_2_speed_fb_label">
+                 <property name="text">
+                  <string>mm/s</string>
                  </property>
                 </widget>
                </item>
@@ -1298,9 +1387,15 @@
                  <property name="enabled">
                   <bool>true</bool>
                  </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>50</width>
+                   <height>50</height>
+                  </size>
+                 </property>
                  <property name="font">
                   <font>
-                   <pointsize>12</pointsize>
+                   <pointsize>15</pointsize>
                   </font>
                  </property>
                  <property name="frameShape">
@@ -1349,9 +1444,15 @@
                </item>
                <item>
                 <widget class="QLCDNumber" name="channel_3_rem_lcd">
+                 <property name="maximumSize">
+                  <size>
+                   <width>50</width>
+                   <height>50</height>
+                  </size>
+                 </property>
                  <property name="font">
                   <font>
-                   <pointsize>12</pointsize>
+                   <pointsize>15</pointsize>
                   </font>
                  </property>
                  <property name="frameShape">
@@ -1382,7 +1483,38 @@
                   </font>
                  </property>
                  <property name="text">
-                  <string>ml</string>
+                  <string>ml | Speed</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLCDNumber" name="channel_3_speed_lcd">
+                 <property name="maximumSize">
+                  <size>
+                   <width>50</width>
+                   <height>50</height>
+                  </size>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>15</pointsize>
+                  </font>
+                 </property>
+                 <property name="frameShape">
+                  <enum>QFrame::StyledPanel</enum>
+                 </property>
+                 <property name="digitCount">
+                  <number>3</number>
+                 </property>
+                 <property name="segmentStyle">
+                  <enum>QLCDNumber::Flat</enum>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="channel_3_speed_fb_label">
+                 <property name="text">
+                  <string>mm/s</string>
                  </property>
                 </widget>
                </item>
@@ -1430,6 +1562,9 @@
                <property name="suffix">
                 <string> ml</string>
                </property>
+               <property name="decimals">
+                <number>0</number>
+               </property>
               </widget>
              </item>
              <item>
@@ -1445,7 +1580,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QDoubleSpinBox" name="channel_3_seed_input">
+              <widget class="QDoubleSpinBox" name="channel_3_speed_input">
                <property name="font">
                 <font>
                  <pointsize>12</pointsize>
@@ -2729,7 +2864,7 @@ asd
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="sequence_control_buttons"/>
   <buttongroup name="side_control_buttons"/>
+  <buttongroup name="sequence_control_buttons"/>
  </buttongroups>
 </ui>
