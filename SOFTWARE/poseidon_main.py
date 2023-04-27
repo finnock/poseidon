@@ -229,21 +229,6 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 
         self.arduino.jog(channel, direction, jog_distance, jog_speed)
 
-
-    # fix
-    def zero(self):
-        self.statusBar().showMessage("You clicked ZERO")
-        testData = []
-
-        cmd = "<ZERO,BLAH,BLAH,BLAH,F,0.0,0.0,0.0>"
-
-        print("Sending ZERO command..")
-        thread = Thread(self.runTest, testData)
-        thread.finished.connect(lambda:self.thread_finished(thread))
-        thread.start()
-        print("ZERO command sent.")
-
-
     def ui_side_stop_button_clicked(self):
         self.statusBar().showMessage("All motors halted")
         self.arduino.stop_movement()

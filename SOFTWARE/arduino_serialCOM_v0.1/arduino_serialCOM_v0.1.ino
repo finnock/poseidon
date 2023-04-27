@@ -430,7 +430,11 @@ void replyToPC() {
 void sendDistanceToPC(int mID) {
   switch (mID) {
     case 1:
+      Serial.println("Motor 1:");
+      Serial.println(stepper1.currentPosition());
+      Serial.println(stepper1.distanceToGo());
       if (stepper1.distanceToGo() != oldDistanceLeft1) {
+        Serial.println("Motor 1:");
         Serial.print("<DISP1|");
         Serial.print(stepper1.distanceToGo());
         Serial.print(">");
@@ -463,6 +467,8 @@ void udpateSettings() {
   stepper1.setCurrentPosition(0.0);
   stepper2.setCurrentPosition(0.0);
   stepper3.setCurrentPosition(0.0);
+
+  Serial.println("ResetCurrentPosition");
 
   if (!strcmp(setting, "ENABLE")) {
       digitalWrite(ENPin, !value);                // If value = 1 the motors should be enabled. Since LOW (=0) enabled the motors it needs to be inverted
@@ -551,9 +557,9 @@ void runFew() {
   for (int i = 0; i < 3; i += 1) {
     if (motors[i] == 1) {
       toMove = direction * distances[i];
-      Serial.print("Sedding tomove command: ");
+      Serial.print("Sending stepper.moveTo command: ");
       Serial.println(toMove);
-      steppers[i].move(toMove);
+      steppers[i].moveTo(toMove);
     }
   }
   // Finally the main loop where we move and check the steppers status
@@ -571,8 +577,7 @@ void runFew() {
 
   Serial.println(array_sum(motors, 3));
 
-// 4000 steps == 1 mm
-
+  int feedbackCounter = 1000;
 
   while (array_sum(stepperStatus, 3) != array_sum(motors, 3)) {
     // We iterate over the 3 possible steppers
@@ -589,6 +594,12 @@ void runFew() {
           stepperStatus[i] = 1;
         }
       }
+    }
+    if (feedbackCounter > 999){
+      Serial.println(steppers[0].distanceToGo());
+      feedbackCounter = 0;
+    } else {
+      feedbackCounter++;
     }
     getDataFromPC();
   }
