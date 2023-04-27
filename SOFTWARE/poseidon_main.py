@@ -153,6 +153,9 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
             spd_input.setSingleStep(syringe_option['speed-step'])
             spd_input.setValue(float(self.config[f"syringe-channel-{sc.channel_number}"]['speed']))
 
+        self.ui.jog_delta_input.setValue(float(self.config['misc']['jog-distance']))
+        self.ui.jog_delta_speed_input.setValue(float(self.config['misc']['jog-speed']))
+
         # ~~~~~~~~~~~
         # TAB : Setup
         # ~~~~~~~~~~~

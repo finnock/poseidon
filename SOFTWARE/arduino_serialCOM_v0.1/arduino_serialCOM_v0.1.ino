@@ -196,6 +196,11 @@ void setup() {
   // tell the PC we are ready
   pinMode(ENPin, OUTPUT);
   digitalWrite(ENPin, HIGH);
+
+  stepper1.setCurrentPosition(0.0);
+  stepper2.setCurrentPosition(0.0);
+  stepper3.setCurrentPosition(0.0);
+
   Serial.println("EN Pin to HIGH");
 
   Serial.println("<Arduino Board is ready>");
@@ -366,17 +371,10 @@ void executeThisFunction() {
 
   else if (strcmp(mode, "SETTING") == 0) {
     return udpateSettings();
-    //Serial.print("UPDATING SETTINGS\n");
   }
 
   else if (strcmp(mode, "RUN") == 0) {
-    // Check if any stepper is currently running and do not allow execution if that is the case
-    //if (!stepper1.isRunning()) {
-      if (strcmp(setting, "DIST") == 0) {
-        return runFew();
-     // }
-    }
-
+    return runFew();
   }
 
   else if (strcmp(mode, "PAUSE") == 0) {
@@ -385,6 +383,10 @@ void executeThisFunction() {
 
   else if (strcmp(mode, "RESUME") == 0) {
     return runFew();
+  }
+
+  else if (strcmp(mode, "ZERO") == 0) {
+    return zero();
   }
 }
 
@@ -464,11 +466,6 @@ void sendDistanceToPC(int mID) {
 // It sets the speed, accel, and jog delta for each pump
 
 void udpateSettings() {
-  stepper1.setCurrentPosition(0.0);
-  stepper2.setCurrentPosition(0.0);
-  stepper3.setCurrentPosition(0.0);
-
-  Serial.println("ResetCurrentPosition");
 
   if (!strcmp(setting, "ENABLE")) {
       digitalWrite(ENPin, !value);                // If value = 1 the motors should be enabled. Since LOW (=0) enabled the motors it needs to be inverted
@@ -516,6 +513,18 @@ void udpateSettings() {
   clearVariables();
 }
 
+void zero() {
+  if (motors[0] == 1) {
+    stepper1.setCurrentPosition(0.0);
+  }
+  if (motors[1] == 1) {
+    stepper2.setCurrentPosition(0.0);
+  }
+  if (motors[2] == 1) {
+    stepper3.setCurrentPosition(0.0);
+  }
+}
+
 //======================================
 // The main function for moving the pumps. Takes in a displacement (in steps) and then moves that much
 // For now this is implemented in a constant speed (acceleration is zero except for start and stop where it is max)
@@ -538,7 +547,7 @@ int array_sum(int * array, int len) {
 void runFew() {
   // First we determine the direction of movement. If 1, then it's forward, otherwise it's -1.
   // We use 1 and -1 so that we can multiply any number and reverse the math, minimizing lines of code
-  AccelStepper steppers[3] = {stepper1, stepper2, stepper3};
+  AccelStepper *steppers[3] = {&stepper1, &stepper2, &stepper3};
 
   int direction = 1;
   if (strcmp(dir, "B") == 0) {
@@ -559,7 +568,7 @@ void runFew() {
       toMove = direction * distances[i];
       Serial.print("Sending stepper.moveTo command: ");
       Serial.println(toMove);
-      steppers[i].moveTo(toMove);
+      steppers[i]->moveTo(toMove);
     }
   }
   // Finally the main loop where we move and check the steppers status
@@ -569,13 +578,6 @@ void runFew() {
   // That number is stored in the motors array, 1 for selected, 0 otherwise
   // If we have 1 and 3 for example motors = [1, 0, 1] => sum = 2
   Serial.println("Entering While Loop ");
-  Serial.println(array_sum(stepperStatus, 3));
-
-  Serial.println(motors[0]);
-  Serial.println(motors[1]);
-  Serial.println(motors[2]);
-
-  Serial.println(array_sum(motors, 3));
 
   int feedbackCounter = 1000;
 
@@ -586,17 +588,22 @@ void runFew() {
       if (motors[i] == 1) {
         // Ask the stepper to move to position at constant speed.
         if (stepperStatus[i] == 0 ) {
-          steppers[i].run();
+          steppers[i]->run();
         }
         // Check if it reached it's position
-        if (steppers[i].distanceToGo() == 0) {
+        if (steppers[i]->distanceToGo() == 0) {
           // If yes then store that value in the stepperStatus array.
           stepperStatus[i] = 1;
         }
       }
     }
     if (feedbackCounter > 999){
-      Serial.println(steppers[0].distanceToGo());
+      Serial.print("POS ");
+      Serial.print(stepper1.currentPosition());
+      Serial.print(" ");
+      Serial.print(stepper2.currentPosition());
+      Serial.print(" ");
+      Serial.println(stepper3.currentPosition());
       feedbackCounter = 0;
     } else {
       feedbackCounter++;
