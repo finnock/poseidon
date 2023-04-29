@@ -11,13 +11,14 @@ class CannotConnectException(Exception):
 
 
 class Arduino:
-    def __init__(self, config):
+    def __init__(self, config, main):
         # Declaring start, mid, and end marker for sending code to Arduino
         self.START_MARKER = 60  # <
         self.MID_MARKER = 44 	# ,
         self.END_MARKER = 62    # >
 
         self.config = config
+        self.main = main
         self.serial = None
         self.connected = False
 
@@ -26,6 +27,7 @@ class Arduino:
         self.mm_per_revolution = 2
         self.motors_enabled = False
         self.motors_changed_callback = None
+        self.position_update_callback = None
 
     # Connect to the Arduino Board
     def connect(self):
@@ -137,8 +139,24 @@ class Arduino:
         while self.global_listener_thread.runs:
             line = self.serial.readline()
             if len(line) > 0:
+                # Decode and trim
                 line = line.decode('ascii').replace('\r\n', '')
+
+                # Printout (move to log)
                 print(f"Serial> {line}")
+
+                # Split line at spaces
+                line_split = line.split()
+
+                # POS feedback
+                if line_split[0] == 'POS':
+                    pos1 = line_split[1].split(':')[1]
+                    rem1 = line_split[2].split(':')[1]
+                    pos2 = line_split[3].split(':')[1]
+                    rem2 = line_split[4].split(':')[1]
+                    pos3 = line_split[5].split(':')[1]
+                    rem3 = line_split[6].split(':')[1]
+                    self.position_update_callback(pos1, rem1, pos2, rem2, pos3, rem3)
 
 
     # #########################################################
@@ -147,7 +165,7 @@ class Arduino:
     # Expose motor functionality to software on API level
     # #########################################################
 
-    def jog(self, motor_channel, direction, distance_in_mm, speed_in_mm_per_s):
+    def jog(self, motor_channel, position_in_steps, speed_in_steps_per_s):
         """ Jogs the given channel in a given direction and distance
 
         Parameters
@@ -161,15 +179,11 @@ class Arduino:
         """
 
         distances = [0.0, 0.0, 0.0]
-        mm_per_rotation = float(self.config['misc']['mm-per-rotation'])
-        steps_per_rotation = float(self.config['misc']['steps-per-rotation'])
-        microsteps_per_step = float(self.config['misc']['microsteps'])
-        distances[motor_channel - 1] = distance_in_mm / mm_per_rotation * steps_per_rotation * microsteps_per_step
-        speed = speed_in_mm_per_s / mm_per_rotation * steps_per_rotation * microsteps_per_step
+        distances[motor_channel - 1] = position_in_steps
 
         # TODO: Add speed setting change and waiter? thread?
-        speed_command = self.return_manual_arduino_command('SETTING', 'SPEED', motor_channel, speed, 'F', [0,0,0])
-        jog_command = self.return_manual_arduino_command('RUN', 'DIST', motor_channel, 1, direction, distances)
+        speed_command = self.return_manual_arduino_command('SETTING', 'SPEED', motor_channel, speed_in_steps_per_s, 'F', [0,0,0])
+        jog_command = self.return_manual_arduino_command('RUN', 'DIST', motor_channel, 1, 'F', distances)
         self.send_commands([speed_command, jog_command])
 
     def enable_motors(self):

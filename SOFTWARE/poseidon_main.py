@@ -56,7 +56,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 
 
         # creating Arduino connection object
-        self.arduino = Arduino(self.config)
+        self.arduino = Arduino(self.config, self)
 
         # Put comments here
         # Populate drop-down UI Objects
@@ -68,6 +68,13 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.syringe_channel_2 = SyringeChannel(self, 2, self.config)
         self.syringe_channel_3 = SyringeChannel(self, 3, self.config)
         self.syringes = [self.syringe_channel_1, self.syringe_channel_2, self.syringe_channel_3]
+
+        self.ui.channel_1_slider.setMaximum(int(self.syringe_channel_1.mm_to_steps(300)))
+        self.ui.channel_1_slider.setValue(0)
+        self.ui.channel_2_slider.setMaximum(int(self.syringe_channel_2.mm_to_steps(300)))
+        self.ui.channel_2_slider.setValue(0)
+        self.ui.channel_3_slider.setMaximum(int(self.syringe_channel_3.mm_to_steps(300)))
+        self.ui.channel_3_slider.setValue(0)
 
         for channel_number in [1, 2, 3]:
             sc = self.syringes[channel_number - 1]
@@ -106,6 +113,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         # ~~~~~~~~~~~~~~~~~~~~~~~~
 
         self.arduino.motors_changed_callback = self.ui_update_motor_state
+        self.arduino.position_update_callback = self.callback_position_update
         self.ui.side_motors_button.clicked.connect(self.ui_toggle_motor_state_clicked)
 
         self.ui.side_num_pad_0_button.clicked.connect(lambda: self.keystroke('0'))
@@ -125,12 +133,12 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         # TAB : Controller
         # ~~~~~~~~~~~~~~~~
 
-        self.ui.channel_1_jog_left_button.clicked.connect(lambda: self.jog(1, "F"))
-        self.ui.channel_1_jog_right_button.clicked.connect(lambda: self.jog(1, "B"))
-        self.ui.channel_2_jog_left_button.clicked.connect(lambda: self.jog(2, "F"))
-        self.ui.channel_2_jog_right_button.clicked.connect(lambda: self.jog(2, "B"))
-        self.ui.channel_3_jog_left_button.clicked.connect(lambda: self.jog(3, "F"))
-        self.ui.channel_3_jog_right_button.clicked.connect(lambda: self.jog(3, "B"))
+        self.ui.channel_1_jog_left_button.clicked.connect(lambda: self.jog(1, 1))
+        self.ui.channel_1_jog_right_button.clicked.connect(lambda: self.jog(1, -1))
+        self.ui.channel_2_jog_left_button.clicked.connect(lambda: self.jog(2, 1))
+        self.ui.channel_2_jog_right_button.clicked.connect(lambda: self.jog(2, -1))
+        self.ui.channel_3_jog_left_button.clicked.connect(lambda: self.jog(3, 1))
+        self.ui.channel_3_jog_right_button.clicked.connect(lambda: self.jog(3, -1))
 
         self.ui.channel_1_end_button.clicked.connect(lambda: self.run(1))
         self.ui.channel_2_end_button.clicked.connect(lambda: self.run(2))
@@ -210,6 +218,23 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
     # FUNCTIONS : Controller
     # ======================
 
+    def callback_position_update(self, p1, r1, p2, r2, p3, r3):
+        # Syringe Channel Feedback
+        self.syringe_channel_1.absolute_position = int(p1)
+        self.syringe_channel_2.absolute_position = int(p2)
+        self.syringe_channel_3.absolute_position = int(p3)
+
+        # UI Slider Feedback
+        self.ui.channel_1_slider.setValue(int(p1))
+        self.ui.channel_2_slider.setValue(int(p2))
+        self.ui.channel_3_slider.setValue(int(p3))
+
+        # # UI LCD Feedback
+        # self.ui.channel_1_pos_lcd.display('{:.1f}'.format(self.syringe_channel_1.steps_to_mm(int(p1))))
+        # self.ui.channel_2_pos_lcd.display('{:.1f}'.format(self.syringe_channel_2.steps_to_mm(int(p2))))
+        # self.ui.channel_3_pos_lcd.display('{:.1f}'.format(self.syringe_channel_3.steps_to_mm(int(p3))))
+
+
     def run(self, channel):
         syringe = self.syringes[channel - 1]
 
@@ -224,13 +249,15 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
     def jog(self, channel, direction):
         print(f"Main> Jog Command. Forward To Arduino Object")
 
-        jog_distance = self.ui.jog_delta_input.value()
-        jog_speed = self.ui.jog_delta_speed_input.value()
+        self.config['misc']['jog-distance'] = str(self.ui.jog_delta_input.value())
+        self.config['misc']['jog-speed'] = str(self.ui.jog_delta_speed_input.value())
 
         lcds = [self.ui.channel_1_speed_lcd, self.ui.channel_2_speed_lcd, self.ui.channel_3_speed_lcd]
-        lcds[channel - 1].display(f"{jog_speed}")
+        lcds[channel - 1].display(f"{self.config['misc']['jog-speed']}")
 
-        self.arduino.jog(channel, direction, jog_distance, jog_speed)
+        absolute_position, jog_speed = self.syringes[channel - 1].get_jog_parameters(direction)
+
+        self.arduino.jog(channel, absolute_position, jog_speed)
 
     def ui_side_stop_button_clicked(self):
         self.statusBar().showMessage("All motors halted")
@@ -354,182 +381,27 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 
     # Send all settings
     def send_all(self):
-        self.statusBar().showMessage("You clicked SEND ALL SETTINGS")
-
-        self.settings = []
-        self.settings.append("<SETTING,SPEED,1,"+str(self.p1_speed_to_send)+",F,0.0,0.0,0.0>")
-        self.settings.append("<SETTING,ACCEL,1,"+str(self.p1_accel_to_send)+",F,0.0,0.0,0.0>")
-
-        self.settings.append("<SETTING,SPEED,2,"+str(self.p2_speed_to_send)+",F,0.0,0.0,0.0>")
-        self.settings.append("<SETTING,ACCEL,2,"+str(self.p2_accel_to_send)+",F,0.0,0.0,0.0>")
-
-        self.settings.append("<SETTING,SPEED,3,"+str(self.p3_speed_to_send)+",F,0.0,0.0,0.0>")
-        self.settings.append("<SETTING,ACCEL,3,"+str(self.p3_accel_to_send)+",F,0.0,0.0,0.0>")
-
-        print("Sending all settings..")
-        self.arduino.send_commands(self.settings)
-
-        self.ui.p1_setup_send_BTN.setStyleSheet("background-color: none")
-        self.ui.p2_setup_send_BTN.setStyleSheet("background-color: none")
-        self.ui.p3_setup_send_BTN.setStyleSheet("background-color: none")
-
-        self.ungrey_out_components()
-
-
-
-    # =======================
-    # MISC : Functions I need
-    # =======================
-
-    def steps2mm(self, steps, microsteps):
-    # 200 steps per rev
-    # one rev is 0.8mm dist
-        #mm = steps/200/32*0.8
-        mm = steps/200/microsteps*0.8
-        return mm
-
-    def steps2mL(self, steps, syringe_area):
-        mL = self.mm32mL(self.steps2mm(steps)*syringe_area)
-        return mL
-
-    def steps2uL(self, steps, syringe_area):
-        uL = self.mm32uL(self.steps2mm(steps)*syringe_area)
-        return uL
-
-
-    def mm2steps(self, mm, microsteps):
-        steps = mm/0.8*200*microsteps
-        #steps = mm*200/0.8
-        return steps
-
-    def mL2steps(self, mL, syringe_area, microsteps):
-        # note syringe_area is in mm^2
-        steps = self.mm2steps(self.mL2mm3(mL)/syringe_area, microsteps)
-        return steps
-
-    def uL2steps(self, uL, syringe_area, microsteps):
-        steps = self.mm2steps(self.uL2mm3(uL)/syringe_area, microsteps)
-        return steps
-
-
-    def mL2uL(self, mL):
-        return mL*1000.0
-
-    def mL2mm3(self, mL):
-        return mL*1000.0
-
-
-    def uL2mL(self, uL):
-        return uL/1000.0
-
-    def uL2mm3(self, uL):
-        return uL
-
-
-    def mm32mL(self, mm3):
-        return mm3/1000.0
-
-    def mm32uL(self, mm3):
-        return mm3
-
-    def persec2permin(self, value_per_sec):
-        value_per_min = value_per_sec*60.0
-        return value_per_min
-
-    def persec2perhour(self, value_per_sec):
-        value_per_hour = value_per_sec*60.0*60.0
-        return value_per_hour
-
-
-    def permin2perhour(self, value_per_min):
-        value_per_hour = value_per_min*60.0
-        return value_per_hour
-
-    def permin2persec(self, value_per_min):
-        value_per_sec = value_per_min/60.0
-        return value_per_sec
-
-
-    def perhour2permin(self, value_per_hour):
-        value_per_min = value_per_hour/60.0
-        return value_per_min
-
-    def perhour2persec(self, value_per_hour):
-        value_per_sec = value_per_hour/60.0/60.0
-        return value_per_sec
-
-    def convert_displacement(self, displacement, units, syringe_area, microsteps):
-        length = units.split("/")[0]
-        time = units.split("/")[1]
-        inp_displacement = displacement
-        # convert length first
-        if length == "mm":
-            displacement = self.mm2steps(displacement, microsteps)
-        elif length == "mL":
-            displacement = self.mL2steps(displacement, syringe_area, microsteps)
-        elif length == "µL":
-            displacement = self.uL2steps(displacement, syringe_area, microsteps)
-
-        print('______________________________')
-        print("INPUT  DISPLACEMENT: " + str(inp_displacement) + ' ' + length)
-        print("OUTPUT DISPLACEMENT: " + str(displacement) + ' steps')
-        print('\n############################################################\n')
-        return displacement
-
-    def convert_speed(self, inp_speed, units, syringe_area, microsteps):
-        length = units.split("/")[0]
-        time = units.split("/")[1]
-
-
-        # convert length first
-        if length == "mm":
-            speed = self.mm2steps(inp_speed, microsteps)
-        elif length == "mL":
-            speed = self.mL2steps(inp_speed, syringe_area, microsteps)
-        elif length == "µL":
-            speed = self.uL2steps(inp_speed, syringe_area, microsteps)
-
-
-        # convert time next
-        if time == "s":
-            pass
-        elif time == "min":
-            speed = self.permin2persec(speed)
-        elif time == "hr":
-            speed = self.perhour2persec(speed)
-
-
-
-        print("INPUT  SPEED: " + str(inp_speed) + ' ' + units)
-        print("OUTPUT SPEED: " + str(speed) + ' steps/s')
-        return speed
-
-    def convert_accel(self, accel, units, syringe_area, microsteps):
-        length = units.split("/")[0]
-        time = units.split("/")[1]
-        inp_accel = accel
-        accel = accel
-
-        # convert length first
-        if length == "mm":
-            accel = self.mm2steps(accel, microsteps)
-        elif length == "mL":
-            accel = self.mL2steps(accel, syringe_area, microsteps)
-        elif length == "µL":
-            accel = self.uL2steps(accel, syringe_area, microsteps)
-
-        # convert time next
-        if time == "s":
-            pass
-        elif time == "min":
-            accel = self.permin2persec(self.permin2persec(accel))
-        elif time == "hr":
-            accel = self.perhour2persec(self.perhour2persec(accel))
-
-        print('______________________________')
-        print("INPUT  ACCEL: " + str(inp_accel) + ' ' + units + '/' + time)
-        print("OUTPUT ACCEL: " + str(accel) + ' steps/s/s')
-        return accel
+        pass
+        # self.statusBar().showMessage("You clicked SEND ALL SETTINGS")
+        #
+        # self.settings = []
+        # self.settings.append("<SETTING,SPEED,1,"+str(self.p1_speed_to_send)+",F,0.0,0.0,0.0>")
+        # self.settings.append("<SETTING,ACCEL,1,"+str(self.p1_accel_to_send)+",F,0.0,0.0,0.0>")
+        #
+        # self.settings.append("<SETTING,SPEED,2,"+str(self.p2_speed_to_send)+",F,0.0,0.0,0.0>")
+        # self.settings.append("<SETTING,ACCEL,2,"+str(self.p2_accel_to_send)+",F,0.0,0.0,0.0>")
+        #
+        # self.settings.append("<SETTING,SPEED,3,"+str(self.p3_speed_to_send)+",F,0.0,0.0,0.0>")
+        # self.settings.append("<SETTING,ACCEL,3,"+str(self.p3_accel_to_send)+",F,0.0,0.0,0.0>")
+        #
+        # print("Sending all settings..")
+        # self.arduino.send_commands(self.settings)
+        #
+        # self.ui.p1_setup_send_BTN.setStyleSheet("background-color: none")
+        # self.ui.p2_setup_send_BTN.setStyleSheet("background-color: none")
+        # self.ui.p3_setup_send_BTN.setStyleSheet("background-color: none")
+        #
+        # self.ungrey_out_components()
 
 
     '''

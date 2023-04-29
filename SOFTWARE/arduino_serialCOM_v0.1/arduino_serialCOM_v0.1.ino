@@ -579,7 +579,7 @@ void runFew() {
   // If we have 1 and 3 for example motors = [1, 0, 1] => sum = 2
   Serial.println("Entering While Loop ");
 
-  int feedbackCounter = 1000;
+  int feedbackCounter = 10000;
 
   while (array_sum(stepperStatus, 3) != array_sum(motors, 3)) {
     // We iterate over the 3 possible steppers
@@ -597,13 +597,19 @@ void runFew() {
         }
       }
     }
-    if (feedbackCounter > 999){
-      Serial.print("POS ");
+    if (feedbackCounter > 9999){
+      Serial.print("POS p1:");
       Serial.print(stepper1.currentPosition());
-      Serial.print(" ");
+      Serial.print(" r1:");
+      Serial.print(stepper1.distanceToGo());
+      Serial.print(" p2:");
       Serial.print(stepper2.currentPosition());
-      Serial.print(" ");
-      Serial.println(stepper3.currentPosition());
+      Serial.print(" r2:");
+      Serial.print(stepper2.distanceToGo());
+      Serial.print(" p3:");
+      Serial.print(stepper3.currentPosition());
+      Serial.print(" r3:");
+      Serial.println(stepper3.distanceToGo());
       feedbackCounter = 0;
     } else {
       feedbackCounter++;
