@@ -55,7 +55,17 @@ class SyringeChannel:
 
         return steps / microsteps_per_step / steps_per_rotation * mm_per_rotation
 
+    def steps_to_ml(self, steps):
+        mm_per_rotation = float(self.config['misc']['mm-per-rotation'])
+        steps_per_rotation = float(self.config['misc']['steps-per-rotation'])
+        microsteps_per_step = float(self.config['misc']['microsteps'])
+
+        return self.mm_to_ml(steps / microsteps_per_step / steps_per_rotation * mm_per_rotation)
+
     def ml_to_mm(self, ml):
-        return ml / self.syringe_area / 1000
+        return ml / (self.syringe_area / 1000)
+
+    def mm_to_ml(self, mm):
+        return mm * (self.syringe_area / 1000)
 
 

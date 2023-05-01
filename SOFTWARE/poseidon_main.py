@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+import time
 from datetime import datetime
 import os
 import serial
@@ -92,6 +92,9 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.threadpool = QtCore.QThreadPool()
         print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
 
+        self.ui_update_thread = Thread(self.ui_update_syringe_channel_position_displays)
+        self.ui_update_thread.start()
+
         if self.config['connection']['auto-connect'] == 'True':
             self.ui_setup_connect_button_clicked()
 
@@ -133,12 +136,12 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         # TAB : Controller
         # ~~~~~~~~~~~~~~~~
 
-        self.ui.channel_1_jog_left_button.clicked.connect(lambda: self.jog(1, 1))
-        self.ui.channel_1_jog_right_button.clicked.connect(lambda: self.jog(1, -1))
-        self.ui.channel_2_jog_left_button.clicked.connect(lambda: self.jog(2, 1))
-        self.ui.channel_2_jog_right_button.clicked.connect(lambda: self.jog(2, -1))
-        self.ui.channel_3_jog_left_button.clicked.connect(lambda: self.jog(3, 1))
-        self.ui.channel_3_jog_right_button.clicked.connect(lambda: self.jog(3, -1))
+        self.ui.channel_1_jog_left_button.clicked.connect(lambda: self.jog(1, -1))
+        self.ui.channel_1_jog_right_button.clicked.connect(lambda: self.jog(1, 1))
+        self.ui.channel_2_jog_left_button.clicked.connect(lambda: self.jog(2, -1))
+        self.ui.channel_2_jog_right_button.clicked.connect(lambda: self.jog(2, 1))
+        self.ui.channel_3_jog_left_button.clicked.connect(lambda: self.jog(3, -1))
+        self.ui.channel_3_jog_right_button.clicked.connect(lambda: self.jog(3, 1))
 
         self.ui.channel_1_end_button.clicked.connect(lambda: self.run(1))
         self.ui.channel_2_end_button.clicked.connect(lambda: self.run(2))
@@ -220,31 +223,59 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 
     def callback_position_update(self, p1, r1, p2, r2, p3, r3):
         # Syringe Channel Feedback
-        self.syringe_channel_1.absolute_position = int(p1)
-        self.syringe_channel_2.absolute_position = int(p2)
-        self.syringe_channel_3.absolute_position = int(p3)
+        self.syringe_channel_1.absolute_position = p1
+        self.syringe_channel_1.remaining_volume = r1
+        self.syringe_channel_2.absolute_position = p2
+        self.syringe_channel_2.remaining_volume = r2
+        self.syringe_channel_3.absolute_position = p3
+        self.syringe_channel_3.remaining_volume = r3
 
-        # UI Slider Feedback
-        self.ui.channel_1_slider.setValue(int(p1))
-        self.ui.channel_2_slider.setValue(int(p2))
-        self.ui.channel_3_slider.setValue(int(p3))
 
-        # # UI LCD Feedback
-        # self.ui.channel_1_pos_lcd.display('{:.1f}'.format(self.syringe_channel_1.steps_to_mm(int(p1))))
-        # self.ui.channel_2_pos_lcd.display('{:.1f}'.format(self.syringe_channel_2.steps_to_mm(int(p2))))
-        # self.ui.channel_3_pos_lcd.display('{:.1f}'.format(self.syringe_channel_3.steps_to_mm(int(p3))))
+    def ui_update_syringe_channel_position_displays(self):
+        while True:
+            time.sleep(0.5)
+            p1 = self.syringe_channel_1.absolute_position
+            r1 = self.syringe_channel_1.remaining_volume
+            p2 = self.syringe_channel_2.absolute_position
+            r2 = self.syringe_channel_2.remaining_volume
+            p3 = self.syringe_channel_3.absolute_position
+            r3 = self.syringe_channel_3.remaining_volume
+
+            # UI Slider Feedback
+            self.ui.channel_1_slider.setValue(p1)
+            self.ui.channel_2_slider.setValue(p2)
+            self.ui.channel_3_slider.setValue(p3)
+
+            # UI LCD Feedback
+            self.ui.channel_1_pos_lcd.display(self.syringe_channel_1.steps_to_mm(p1))
+            self.ui.channel_2_pos_lcd.display(self.syringe_channel_2.steps_to_mm(p2))
+            self.ui.channel_3_pos_lcd.display(self.syringe_channel_3.steps_to_mm(p3))
+
+            # UI LCD Feedback
+            self.ui.channel_1_rem_lcd.display(self.syringe_channel_1.steps_to_ml(r1))
+            self.ui.channel_2_rem_lcd.display(self.syringe_channel_2.steps_to_ml(r2))
+            self.ui.channel_3_rem_lcd.display(self.syringe_channel_3.steps_to_ml(r3))
+
 
 
     def run(self, channel):
-        syringe = self.syringes[channel - 1]
+
+        vol_input, spd_input, syringe = [
+            (self.ui.channel_1_volume_input, self.ui.channel_1_speed_input, self.syringe_channel_1),
+            (self.ui.channel_2_volume_input, self.ui.channel_2_speed_input, self.syringe_channel_2),
+            (self.ui.channel_3_volume_input, self.ui.channel_3_speed_input, self.syringe_channel_3),
+        ][channel - 1]
+
+        self.config[f"syringe-channel-{channel}"]['speed'] = str(spd_input.value())
+        self.config[f"syringe-channel-{channel}"]['volume'] = str(vol_input.value())
 
         # get run distance in mm from SC Object
-        run_distance, run_speed = syringe.get_run_parameters()
-        print(f"{(run_distance, run_speed)=}")
-        lcds = [self.ui.channel_1_speed_lcd, self.ui.channel_2_speed_lcd, self.ui.channel_3_speed_lcd]
-        lcds[channel - 1].display('{:.2f}'.format(run_speed))
+        absolute_position, run_speed = syringe.get_run_parameters()
 
-        self.arduino.jog(channel, 'F', run_distance, run_speed)
+        lcds = [self.ui.channel_1_speed_lcd, self.ui.channel_2_speed_lcd, self.ui.channel_3_speed_lcd]
+        lcds[channel - 1].display(syringe.steps_to_mm(run_speed))
+
+        self.arduino.jog(channel, absolute_position, run_speed)
 
     def jog(self, channel, direction):
         print(f"Main> Jog Command. Forward To Arduino Object")
@@ -253,7 +284,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.config['misc']['jog-speed'] = str(self.ui.jog_delta_speed_input.value())
 
         lcds = [self.ui.channel_1_speed_lcd, self.ui.channel_2_speed_lcd, self.ui.channel_3_speed_lcd]
-        lcds[channel - 1].display(f"{self.config['misc']['jog-speed']}")
+        lcds[channel - 1].display(self.config['misc']['jog-speed'])
 
         absolute_position, jog_speed = self.syringes[channel - 1].get_jog_parameters(direction)
 

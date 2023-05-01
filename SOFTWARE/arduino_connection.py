@@ -3,6 +3,7 @@ import time
 import glob
 import sys
 import traceback
+import re
 from thread import Thread
 
 
@@ -143,19 +144,19 @@ class Arduino:
                 line = line.decode('ascii').replace('\r\n', '')
 
                 # Printout (move to log)
-                print(f"Serial> {line}")
+                # print(f"Serial> {line}")
 
                 # Split line at spaces
-                line_split = line.split()
+                line_split = re.split(' |:', line)
 
                 # POS feedback
                 if line_split[0] == 'POS':
-                    pos1 = line_split[1].split(':')[1]
-                    rem1 = line_split[2].split(':')[1]
-                    pos2 = line_split[3].split(':')[1]
-                    rem2 = line_split[4].split(':')[1]
-                    pos3 = line_split[5].split(':')[1]
-                    rem3 = line_split[6].split(':')[1]
+                    pos1 = int(line_split[2])
+                    rem1 = int(line_split[4])
+                    pos2 = int(line_split[6])
+                    rem2 = int(line_split[8])
+                    pos3 = int(line_split[10])
+                    rem3 = int(line_split[12])
                     self.position_update_callback(pos1, rem1, pos2, rem2, pos3, rem3)
 
 

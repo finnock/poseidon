@@ -172,6 +172,8 @@ unsigned long curMillis;
 unsigned long prevReplyToPCmillis = 0;
 unsigned long replyToPCinterval = 1000;
 
+int feedbackCounter = 10000;
+
 //=============
 // Setup is only called once. When we start up the GUI the Arduino initalizes with a BAUD Rate of _________
 void setup() {
@@ -205,18 +207,34 @@ void setup() {
 
   Serial.println("<Arduino Board is ready>");
 
-
 }
 
 //=============
 // The loop function is what is always running and refreshes BAUD_RATE times per second
 void loop() {
   curMillis = millis();
+  stepper1.run();
+  stepper2.run();
+  stepper3.run();
   getDataFromPC();
-  // Now is when we determine which mode we are in which dictates which function to call
-  //replyToPC();
-  //executeThisFunction();
-  //replyToPC();
+
+  if (feedbackCounter > 9999){
+    Serial.print("POS p1:");
+    Serial.print(stepper1.currentPosition());
+    Serial.print(" r1:");
+    Serial.print(stepper1.distanceToGo());
+    Serial.print(" p2:");
+    Serial.print(stepper2.currentPosition());
+    Serial.print(" r2:");
+    Serial.print(stepper2.distanceToGo());
+    Serial.print(" p3:");
+    Serial.print(stepper3.currentPosition());
+    Serial.print(" r3:");
+    Serial.println(stepper3.distanceToGo());
+    feedbackCounter = 0;
+  } else {
+    feedbackCounter++;
+  }
 }
 
 //=============
@@ -423,44 +441,6 @@ void replyToPC() {
 }
 
 
-// Here we want to send our current distance to the PC
-// We send the motor ID and then print out distance left
-// This returns the step difference between where we are at now and where we want to be.
-// Since the Baud Rate is larger than the speed of rotation for max motor speed
-// we return the distance left only if it changes otherwise it would print out the same
-// number a million times
-void sendDistanceToPC(int mID) {
-  switch (mID) {
-    case 1:
-      Serial.println("Motor 1:");
-      Serial.println(stepper1.currentPosition());
-      Serial.println(stepper1.distanceToGo());
-      if (stepper1.distanceToGo() != oldDistanceLeft1) {
-        Serial.println("Motor 1:");
-        Serial.print("<DISP1|");
-        Serial.print(stepper1.distanceToGo());
-        Serial.print(">");
-      }
-      oldDistanceLeft1 = stepper1.distanceToGo();
-      break;
-    case 2:
-      if (stepper2.distanceToGo() != oldDistanceLeft2) {
-        Serial.print("<DISP2|");
-        Serial.print(stepper2.distanceToGo());
-        Serial.print(">");
-      }
-      oldDistanceLeft2 = stepper2.distanceToGo();
-      break;
-    case 3:
-      if (stepper3.distanceToGo() != oldDistanceLeft3) {
-        Serial.print("<DISP3|");
-        Serial.print(stepper3.distanceToGo());
-        Serial.print(">");
-      }
-      oldDistanceLeft3 = stepper3.distanceToGo();
-      break;
-  }
-}
 //============
 // Update the settings for each stepper. This is run before performing any moving functions
 // It sets the speed, accel, and jog delta for each pump
@@ -570,51 +550,6 @@ void runFew() {
       Serial.println(toMove);
       steppers[i]->moveTo(toMove);
     }
-  }
-  // Finally the main loop where we move and check the steppers status
-  // We declare an array to store the status of each stepper
-  int stepperStatus[3] = {0, 0, 0};
-  // Then we loop until that sum is equal to the number of selected steppers
-  // That number is stored in the motors array, 1 for selected, 0 otherwise
-  // If we have 1 and 3 for example motors = [1, 0, 1] => sum = 2
-  Serial.println("Entering While Loop ");
-
-  int feedbackCounter = 10000;
-
-  while (array_sum(stepperStatus, 3) != array_sum(motors, 3)) {
-    // We iterate over the 3 possible steppers
-    for (int i = 0; i < 3; i += 1) {
-      // If this stepper is selected
-      if (motors[i] == 1) {
-        // Ask the stepper to move to position at constant speed.
-        if (stepperStatus[i] == 0 ) {
-          steppers[i]->run();
-        }
-        // Check if it reached it's position
-        if (steppers[i]->distanceToGo() == 0) {
-          // If yes then store that value in the stepperStatus array.
-          stepperStatus[i] = 1;
-        }
-      }
-    }
-    if (feedbackCounter > 9999){
-      Serial.print("POS p1:");
-      Serial.print(stepper1.currentPosition());
-      Serial.print(" r1:");
-      Serial.print(stepper1.distanceToGo());
-      Serial.print(" p2:");
-      Serial.print(stepper2.currentPosition());
-      Serial.print(" r2:");
-      Serial.print(stepper2.distanceToGo());
-      Serial.print(" p3:");
-      Serial.print(stepper3.currentPosition());
-      Serial.print(" r3:");
-      Serial.println(stepper3.distanceToGo());
-      feedbackCounter = 0;
-    } else {
-      feedbackCounter++;
-    }
-    getDataFromPC();
   }
   clearVariables();
 }
