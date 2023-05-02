@@ -287,12 +287,12 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
             time.sleep(1)
             print('After Sleep')
 
-            self.ui.channel_1_pos_lcd.repaint()
-            self.ui.channel_2_pos_lcd.repaint()
-            self.ui.channel_3_pos_lcd.repaint()
-            self.ui.channel_1_rem_lcd.repaint()
-            self.ui.channel_2_rem_lcd.repaint()
-            self.ui.channel_3_rem_lcd.repaint()
+            # self.ui.channel_1_pos_lcd.repaint()
+            # self.ui.channel_2_pos_lcd.repaint()
+            # self.ui.channel_3_pos_lcd.repaint()
+            # self.ui.channel_1_rem_lcd.repaint()
+            # self.ui.channel_2_rem_lcd.repaint()
+            # self.ui.channel_3_rem_lcd.repaint()
 
 
     def run(self, channel):
