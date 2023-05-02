@@ -110,6 +110,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 
         # Initializing multithreading to allow parallel operations
         self.threadpool = QtCore.QThreadPool()
+        self.threadpool.setMaxThreadCount(8)
         print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
 
         print("Threadpool Started")
@@ -263,8 +264,6 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         print('Starting SC Thread')
 
         while True:
-            print('UI Update')
-            print(f"Active Threads: {self.threadpool.activeThreadCount()}")
             p1 = self.syringe_channel_1.absolute_position
             r1 = self.syringe_channel_1.remaining_volume
             p2 = self.syringe_channel_2.absolute_position
@@ -337,7 +336,6 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         # Run Channel 1
         self.run(1)
         self.syringe_channel_1.running = True
-
         print('Go into Wait Loop')
         while self.syringe_channel_1.running:
             time.sleep(1)
@@ -347,13 +345,11 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 
         self.run(2)
         self.syringe_channel_2.running = True
-
         while self.syringe_channel_2.running:
             time.sleep(1)
 
         self.run(3)
         self.syringe_channel_3.running = True
-
         while self.syringe_channel_3.running:
             time.sleep(1)
 
