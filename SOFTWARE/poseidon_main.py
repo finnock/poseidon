@@ -233,7 +233,6 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 
     def ui_update_syringe_channel_position_displays(self):
         while True:
-            time.sleep(0.5)
             p1 = self.syringe_channel_1.absolute_position
             r1 = self.syringe_channel_1.remaining_volume
             p2 = self.syringe_channel_2.absolute_position
@@ -256,6 +255,14 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
             self.ui.channel_2_rem_lcd.display(self.syringe_channel_2.steps_to_ml(r2))
             self.ui.channel_3_rem_lcd.display(self.syringe_channel_3.steps_to_ml(r3))
 
+            time.sleep(0.2)
+
+            self.ui.channel_1_pos_lcd.repaint()
+            self.ui.channel_2_pos_lcd.repaint()
+            self.ui.channel_3_pos_lcd.repaint()
+            self.ui.channel_1_rem_lcd.repaint()
+            self.ui.channel_2_rem_lcd.repaint()
+            self.ui.channel_3_rem_lcd.repaint()
 
 
     def run(self, channel):
