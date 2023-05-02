@@ -263,6 +263,8 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         print('Starting SC Thread')
 
         while True:
+            print('UI Update')
+            print(f"Active Threads: {self.threadpool.activeThreadCount()}")
             p1 = self.syringe_channel_1.absolute_position
             r1 = self.syringe_channel_1.remaining_volume
             p2 = self.syringe_channel_2.absolute_position
