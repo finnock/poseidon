@@ -120,9 +120,10 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         print("UI Update Thread Started")
 
         if self.config['connection']['auto-connect'] == 'True':
+            print("Attempting Auto Connect")
             self.ui_setup_connect_button_clicked()
 
-        print("Passed Auto Connect. Finished __ui__")
+        print("Passed Auto Connect. Finished __init__")
 
     def keystroke(self, key):
         pyautogui.press(key)
