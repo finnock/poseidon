@@ -195,7 +195,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.ui.jog_delta_input.setValue(float(self.config['misc']['jog-distance']))
         self.ui.jog_delta_speed_input.setValue(float(self.config['misc']['jog-speed']))
 
-        self.ui.side_play_pause_button.clicked.connect(self.run_sequence)
+        self.ui.side_play_pause_button.clicked.connect(self.run_sequence_thread)
 
         # ~~~~~~~~~~~
         # TAB : Setup
@@ -289,16 +289,9 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
             self.syringe_channel_1.running = (r1 > 0)
             self.syringe_channel_2.running = (r2 > 0)
             self.syringe_channel_3.running = (r3 > 0)
+            # self.ui.channel_1_pos_lcd.repaint()
 
             time.sleep(0.2)
-
-            # self.ui.channel_1_pos_lcd.repaint()
-            # self.ui.channel_2_pos_lcd.repaint()
-            # self.ui.channel_3_pos_lcd.repaint()
-            # self.ui.channel_1_rem_lcd.repaint()
-            # self.ui.channel_2_rem_lcd.repaint()
-            # self.ui.channel_3_rem_lcd.repaint()
-
 
     def run(self, channel):
 
@@ -331,6 +324,11 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         absolute_position, jog_speed = self.syringes[channel - 1].get_jog_parameters(direction)
 
         self.arduino.jog(channel, absolute_position, jog_speed)
+
+    def run_sequence_thread(self):
+        print('Woot')
+        self.run_sequence_thread = Thread(self.run_sequence)
+        self.run_sequence_thread.start()
 
     def run_sequence(self):
         # Run Channel 1
