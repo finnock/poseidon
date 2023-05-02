@@ -284,7 +284,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
             self.ui.channel_3_rem_lcd.display(self.syringe_channel_3.steps_to_ml(r3))
 
             print('Before Sleep')
-            time.sleep(0.2)
+            time.sleep(1)
             print('After Sleep')
 
             self.ui.channel_1_pos_lcd.repaint()
