@@ -1,0 +1,33 @@
+[connection]
+com-port = COM5
+baudrate = 230400
+auto-connect = False
+
+[misc]
+fullscreen = True
+jog-distance = 1
+jog-speed = 1
+mm-per-rotation = 8
+steps-per-rotation = 200
+microsteps = 16
+
+[syringe-channel-1]
+size = 500 mL
+speed = 0
+volume = 0
+acceleration = 5
+sequence-position = 1
+
+[syringe-channel-2]
+size = 500 mL
+speed = 1700
+volume = 5
+acceleration = 5
+sequence-position = 2
+
+[syringe-channel-3]
+size = 500 mL
+speed = 0
+volume = 0
+acceleration = 5
+sequence-position = 3

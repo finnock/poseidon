@@ -35,7 +35,7 @@
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <property name="iconSize">
        <size>
@@ -143,9 +143,15 @@
                    <bold>true</bold>
                   </font>
                  </property>
+                 <property name="styleSheet">
+                  <string notr="true">padding: 0;</string>
+                 </property>
                  <property name="text">
                   <string>0</string>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
                <item>
@@ -165,7 +171,7 @@
                  <property name="font">
                   <font>
                    <family>MS Shell Dlg 2</family>
-                   <pointsize>15</pointsize>
+                   <pointsize>30</pointsize>
                    <weight>75</weight>
                    <bold>true</bold>
                   </font>
@@ -176,6 +182,9 @@
                  <property name="flat">
                   <bool>false</bool>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
                <item>
@@ -240,6 +249,9 @@
                  <property name="text">
                   <string>&gt;</string>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
                <item>
@@ -273,6 +285,9 @@
                  <property name="text">
                   <string>&gt;|</string>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
               </layout>
@@ -290,9 +305,17 @@
                    <height>40</height>
                   </size>
                  </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>15</pointsize>
+                  </font>
+                 </property>
                  <property name="text">
                   <string>1st</string>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
                <item>
@@ -310,6 +333,11 @@
                </item>
                <item>
                 <widget class="QLabel" name="channel_1_pos_label">
+                 <property name="font">
+                  <font>
+                   <pointsize>15</pointsize>
+                  </font>
+                 </property>
                  <property name="text">
                   <string>Position</string>
                  </property>
@@ -320,9 +348,15 @@
                  <property name="enabled">
                   <bool>true</bool>
                  </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>70</width>
+                   <height>50</height>
+                  </size>
+                 </property>
                  <property name="font">
                   <font>
-                   <pointsize>12</pointsize>
+                   <pointsize>15</pointsize>
                   </font>
                  </property>
                  <property name="frameShape">
@@ -335,7 +369,7 @@
                   <number>1</number>
                  </property>
                  <property name="digitCount">
-                  <number>3</number>
+                  <number>5</number>
                  </property>
                  <property name="segmentStyle">
                   <enum>QLCDNumber::Flat</enum>
@@ -347,6 +381,11 @@
                </item>
                <item>
                 <widget class="QLabel" name="channel_1_pos_unit_label">
+                 <property name="font">
+                  <font>
+                   <pointsize>15</pointsize>
+                  </font>
+                 </property>
                  <property name="text">
                   <string>mm</string>
                  </property>
@@ -354,6 +393,11 @@
                </item>
                <item>
                 <widget class="QLabel" name="channel_1_rem_label">
+                 <property name="font">
+                  <font>
+                   <pointsize>15</pointsize>
+                  </font>
+                 </property>
                  <property name="text">
                   <string> | Remain</string>
                  </property>
@@ -361,9 +405,21 @@
                </item>
                <item>
                 <widget class="QLCDNumber" name="channel_1_rem_lcd">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>70</width>
+                   <height>50</height>
+                  </size>
+                 </property>
                  <property name="font">
                   <font>
-                   <pointsize>12</pointsize>
+                   <pointsize>15</pointsize>
                   </font>
                  </property>
                  <property name="frameShape">
@@ -376,7 +432,7 @@
                   <number>1</number>
                  </property>
                  <property name="digitCount">
-                  <number>3</number>
+                  <number>5</number>
                  </property>
                  <property name="segmentStyle">
                   <enum>QLCDNumber::Flat</enum>
@@ -388,8 +444,53 @@
                </item>
                <item>
                 <widget class="QLabel" name="channel_1_rem_unit_label">
+                 <property name="font">
+                  <font>
+                   <pointsize>15</pointsize>
+                  </font>
+                 </property>
                  <property name="text">
-                  <string>ml</string>
+                  <string>ml | Speed</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLCDNumber" name="channel_1_speed_lcd">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>70</width>
+                   <height>50</height>
+                  </size>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>15</pointsize>
+                  </font>
+                 </property>
+                 <property name="frameShape">
+                  <enum>QFrame::StyledPanel</enum>
+                 </property>
+                 <property name="digitCount">
+                  <number>5</number>
+                 </property>
+                 <property name="segmentStyle">
+                  <enum>QLCDNumber::Flat</enum>
+                 </property>
+                 <property name="value" stdset="0">
+                  <double>0.000000000000000</double>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="channel_1_speed_fb_label">
+                 <property name="text">
+                  <string>mm/s</string>
                  </property>
                 </widget>
                </item>
@@ -581,6 +682,9 @@
                  <property name="text">
                   <string>0</string>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
                <item>
@@ -611,6 +715,9 @@
                  <property name="flat">
                   <bool>false</bool>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
                <item>
@@ -669,6 +776,9 @@
                  <property name="text">
                   <string>&gt;</string>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
                <item>
@@ -702,6 +812,9 @@
                  <property name="text">
                   <string>&gt;|</string>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
               </layout>
@@ -719,9 +832,17 @@
                    <height>40</height>
                   </size>
                  </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>15</pointsize>
+                  </font>
+                 </property>
                  <property name="text">
                   <string>2nd</string>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
                <item>
@@ -739,6 +860,11 @@
                </item>
                <item>
                 <widget class="QLabel" name="channel_2_pos_label">
+                 <property name="font">
+                  <font>
+                   <pointsize>15</pointsize>
+                  </font>
+                 </property>
                  <property name="text">
                   <string>Position</string>
                  </property>
@@ -749,9 +875,15 @@
                  <property name="enabled">
                   <bool>true</bool>
                  </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>70</width>
+                   <height>50</height>
+                  </size>
+                 </property>
                  <property name="font">
                   <font>
-                   <pointsize>12</pointsize>
+                   <pointsize>15</pointsize>
                   </font>
                  </property>
                  <property name="frameShape">
@@ -764,7 +896,7 @@
                   <number>1</number>
                  </property>
                  <property name="digitCount">
-                  <number>3</number>
+                  <number>5</number>
                  </property>
                  <property name="segmentStyle">
                   <enum>QLCDNumber::Flat</enum>
@@ -776,6 +908,11 @@
                </item>
                <item>
                 <widget class="QLabel" name="channel_2_pos_unit_label">
+                 <property name="font">
+                  <font>
+                   <pointsize>15</pointsize>
+                  </font>
+                 </property>
                  <property name="text">
                   <string>mm</string>
                  </property>
@@ -783,6 +920,11 @@
                </item>
                <item>
                 <widget class="QLabel" name="channel_2_rem_label">
+                 <property name="font">
+                  <font>
+                   <pointsize>15</pointsize>
+                  </font>
+                 </property>
                  <property name="text">
                   <string> | Remain</string>
                  </property>
@@ -790,9 +932,21 @@
                </item>
                <item>
                 <widget class="QLCDNumber" name="channel_2_rem_lcd">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>70</width>
+                   <height>50</height>
+                  </size>
+                 </property>
                  <property name="font">
                   <font>
-                   <pointsize>12</pointsize>
+                   <pointsize>15</pointsize>
                   </font>
                  </property>
                  <property name="frameShape">
@@ -805,7 +959,7 @@
                   <number>1</number>
                  </property>
                  <property name="digitCount">
-                  <number>3</number>
+                  <number>5</number>
                  </property>
                  <property name="segmentStyle">
                   <enum>QLCDNumber::Flat</enum>
@@ -817,8 +971,50 @@
                </item>
                <item>
                 <widget class="QLabel" name="channel_2_rem_unit_label">
+                 <property name="font">
+                  <font>
+                   <pointsize>15</pointsize>
+                  </font>
+                 </property>
                  <property name="text">
-                  <string>ml</string>
+                  <string>ml | Speed</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLCDNumber" name="channel_2_speed_lcd">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>70</width>
+                   <height>50</height>
+                  </size>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>15</pointsize>
+                  </font>
+                 </property>
+                 <property name="frameShape">
+                  <enum>QFrame::StyledPanel</enum>
+                 </property>
+                 <property name="digitCount">
+                  <number>5</number>
+                 </property>
+                 <property name="segmentStyle">
+                  <enum>QLCDNumber::Flat</enum>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="channel_2_speed_fb_label">
+                 <property name="text">
+                  <string>mm/s</string>
                  </property>
                 </widget>
                </item>
@@ -866,6 +1062,12 @@
                <property name="suffix">
                 <string> ml</string>
                </property>
+               <property name="decimals">
+                <number>0</number>
+               </property>
+               <property name="maximum">
+                <double>1000.000000000000000</double>
+               </property>
               </widget>
              </item>
              <item>
@@ -892,6 +1094,12 @@
                </property>
                <property name="suffix">
                 <string> ml/h</string>
+               </property>
+               <property name="decimals">
+                <number>0</number>
+               </property>
+               <property name="maximum">
+                <double>9999.000000000000000</double>
                </property>
               </widget>
              </item>
@@ -1010,6 +1218,9 @@
                  <property name="text">
                   <string>0</string>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
                <item>
@@ -1040,6 +1251,9 @@
                  <property name="flat">
                   <bool>false</bool>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
                <item>
@@ -1098,6 +1312,9 @@
                  <property name="text">
                   <string>&gt;</string>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
                <item>
@@ -1131,6 +1348,9 @@
                  <property name="text">
                   <string>&gt;|</string>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
               </layout>
@@ -1148,9 +1368,17 @@
                    <height>40</height>
                   </size>
                  </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>15</pointsize>
+                  </font>
+                 </property>
                  <property name="text">
                   <string>3rd</string>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
                <item>
@@ -1168,6 +1396,11 @@
                </item>
                <item>
                 <widget class="QLabel" name="channel_3_pos_label">
+                 <property name="font">
+                  <font>
+                   <pointsize>15</pointsize>
+                  </font>
+                 </property>
                  <property name="text">
                   <string>Position</string>
                  </property>
@@ -1178,9 +1411,15 @@
                  <property name="enabled">
                   <bool>true</bool>
                  </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>70</width>
+                   <height>50</height>
+                  </size>
+                 </property>
                  <property name="font">
                   <font>
-                   <pointsize>12</pointsize>
+                   <pointsize>15</pointsize>
                   </font>
                  </property>
                  <property name="frameShape">
@@ -1193,7 +1432,7 @@
                   <number>1</number>
                  </property>
                  <property name="digitCount">
-                  <number>3</number>
+                  <number>5</number>
                  </property>
                  <property name="segmentStyle">
                   <enum>QLCDNumber::Flat</enum>
@@ -1205,6 +1444,11 @@
                </item>
                <item>
                 <widget class="QLabel" name="channel_3_pos_unit_label">
+                 <property name="font">
+                  <font>
+                   <pointsize>15</pointsize>
+                  </font>
+                 </property>
                  <property name="text">
                   <string>mm</string>
                  </property>
@@ -1212,6 +1456,11 @@
                </item>
                <item>
                 <widget class="QLabel" name="channel_3_rem_label">
+                 <property name="font">
+                  <font>
+                   <pointsize>15</pointsize>
+                  </font>
+                 </property>
                  <property name="text">
                   <string> | Remain</string>
                  </property>
@@ -1219,9 +1468,21 @@
                </item>
                <item>
                 <widget class="QLCDNumber" name="channel_3_rem_lcd">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>70</width>
+                   <height>50</height>
+                  </size>
+                 </property>
                  <property name="font">
                   <font>
-                   <pointsize>12</pointsize>
+                   <pointsize>15</pointsize>
                   </font>
                  </property>
                  <property name="frameShape">
@@ -1234,7 +1495,7 @@
                   <number>1</number>
                  </property>
                  <property name="digitCount">
-                  <number>3</number>
+                  <number>5</number>
                  </property>
                  <property name="segmentStyle">
                   <enum>QLCDNumber::Flat</enum>
@@ -1246,8 +1507,50 @@
                </item>
                <item>
                 <widget class="QLabel" name="channel_3_rem_unit_label">
+                 <property name="font">
+                  <font>
+                   <pointsize>15</pointsize>
+                  </font>
+                 </property>
                  <property name="text">
-                  <string>ml</string>
+                  <string>ml | Speed</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLCDNumber" name="channel_3_speed_lcd">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>70</width>
+                   <height>50</height>
+                  </size>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>15</pointsize>
+                  </font>
+                 </property>
+                 <property name="frameShape">
+                  <enum>QFrame::StyledPanel</enum>
+                 </property>
+                 <property name="digitCount">
+                  <number>5</number>
+                 </property>
+                 <property name="segmentStyle">
+                  <enum>QLCDNumber::Flat</enum>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="channel_3_speed_fb_label">
+                 <property name="text">
+                  <string>mm/s</string>
                  </property>
                 </widget>
                </item>
@@ -1295,6 +1598,9 @@
                <property name="suffix">
                 <string> ml</string>
                </property>
+               <property name="decimals">
+                <number>0</number>
+               </property>
               </widget>
              </item>
              <item>
@@ -1310,7 +1616,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QDoubleSpinBox" name="channel_3_seed_input">
+              <widget class="QDoubleSpinBox" name="channel_3_speed_input">
                <property name="font">
                 <font>
                  <pointsize>12</pointsize>
@@ -1345,26 +1651,53 @@
               <height>16777215</height>
              </size>
             </property>
+            <property name="font">
+             <font>
+              <pointsize>15</pointsize>
+             </font>
+            </property>
             <property name="text">
              <string>Jog:</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QDoubleSpinBox" name="jog_delta_input"/>
-          </item>
-          <item>
-           <widget class="QLabel" name="jog_delta_unit_label">
-            <property name="text">
-             <string>mm | </string>
+           <widget class="QDoubleSpinBox" name="jog_delta_input">
+            <property name="font">
+             <font>
+              <pointsize>15</pointsize>
+             </font>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QDoubleSpinBox" name="jog_delta_speed_input"/>
+           <widget class="QLabel" name="jog_delta_unit_label">
+            <property name="font">
+             <font>
+              <pointsize>15</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>mm | Speed:      </string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="jog_delta_speed_input">
+            <property name="font">
+             <font>
+              <pointsize>15</pointsize>
+             </font>
+            </property>
+           </widget>
           </item>
           <item>
            <widget class="QLabel" name="jog_delta_speed_unit_label">
+            <property name="font">
+             <font>
+              <pointsize>15</pointsize>
+             </font>
+            </property>
             <property name="text">
              <string>mm/s</string>
             </property>
@@ -1404,6 +1737,11 @@
               <layout class="QGridLayout" name="gridLayout_4">
                <item row="2" column="1">
                 <widget class="QComboBox" name="setup_baudrate_input">
+                 <property name="font">
+                  <font>
+                   <pointsize>15</pointsize>
+                  </font>
+                 </property>
                  <item>
                   <property name="text">
                    <string>230400</string>
@@ -1412,10 +1750,21 @@
                 </widget>
                </item>
                <item row="0" column="1">
-                <widget class="QComboBox" name="setup_port_input"/>
+                <widget class="QComboBox" name="setup_port_input">
+                 <property name="font">
+                  <font>
+                   <pointsize>15</pointsize>
+                  </font>
+                 </property>
+                </widget>
                </item>
                <item row="2" column="0">
                 <widget class="QLabel" name="setup_baudrate_label">
+                 <property name="font">
+                  <font>
+                   <pointsize>15</pointsize>
+                  </font>
+                 </property>
                  <property name="text">
                   <string>Baudrate:</string>
                  </property>
@@ -1428,6 +1777,11 @@
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>15</pointsize>
+                  </font>
                  </property>
                  <property name="text">
                   <string>Refresh ports</string>
@@ -1465,10 +1819,21 @@
                 </widget>
                </item>
                <item row="1" column="1">
-                <widget class="QComboBox" name="setup_microstepping_input"/>
+                <widget class="QComboBox" name="setup_microstepping_input">
+                 <property name="font">
+                  <font>
+                   <pointsize>15</pointsize>
+                  </font>
+                 </property>
+                </widget>
                </item>
                <item row="3" column="1">
                 <widget class="QCheckBox" name="setup_auto_connect_checkbox">
+                 <property name="font">
+                  <font>
+                   <pointsize>15</pointsize>
+                  </font>
+                 </property>
                  <property name="text">
                   <string>Auto Connect</string>
                  </property>
@@ -1489,6 +1854,11 @@
               <layout class="QGridLayout" name="gridLayout_5">
                <item row="0" column="0">
                 <widget class="QPushButton" name="setup_load_settings_button">
+                 <property name="font">
+                  <font>
+                   <pointsize>15</pointsize>
+                  </font>
+                 </property>
                  <property name="text">
                   <string>   Load Settings</string>
                  </property>
@@ -1500,6 +1870,11 @@
                </item>
                <item row="1" column="0">
                 <widget class="QPushButton" name="setup_save_settings_button">
+                 <property name="font">
+                  <font>
+                   <pointsize>15</pointsize>
+                  </font>
+                 </property>
                  <property name="text">
                   <string>   Save Settings</string>
                  </property>
@@ -1511,6 +1886,11 @@
                </item>
                <item row="2" column="0">
                 <widget class="QLabel" name="setup_config_file_label">
+                 <property name="font">
+                  <font>
+                   <pointsize>15</pointsize>
+                  </font>
+                 </property>
                  <property name="text">
                   <string>config.ini file found</string>
                  </property>
@@ -1527,31 +1907,45 @@
          <layout class="QHBoxLayout" name="horizontalLayout_27">
           <item>
            <widget class="QGroupBox" name="setup_channel_1_group">
+            <property name="font">
+             <font>
+              <pointsize>15</pointsize>
+             </font>
+            </property>
             <property name="title">
              <string>Channel 1</string>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_6">
              <item>
-              <widget class="QComboBox" name="setup_channel_1_syringe_input"/>
+              <widget class="QComboBox" name="setup_channel_1_syringe_input">
+               <property name="font">
+                <font>
+                 <pointsize>15</pointsize>
+                </font>
+               </property>
+              </widget>
              </item>
              <item>
               <widget class="QComboBox" name="setup_channel_1_unit_input">
                <property name="enabled">
                 <bool>false</bool>
                </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QDoubleSpinBox" name="setup_channel_1_accel_input">
-               <property name="maximum">
-                <double>99999.990000000005239</double>
+               <property name="font">
+                <font>
+                 <pointsize>15</pointsize>
+                </font>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="setup_channel_1_send_settings_button">
-               <property name="text">
-                <string>Send</string>
+              <widget class="QDoubleSpinBox" name="setup_channel_1_accel_input">
+               <property name="font">
+                <font>
+                 <pointsize>15</pointsize>
+                </font>
+               </property>
+               <property name="maximum">
+                <double>99999.990000000005239</double>
                </property>
               </widget>
              </item>
@@ -1560,31 +1954,45 @@
           </item>
           <item>
            <widget class="QGroupBox" name="setup_channel_2_group">
+            <property name="font">
+             <font>
+              <pointsize>15</pointsize>
+             </font>
+            </property>
             <property name="title">
              <string>Channel 2</string>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_7">
              <item>
-              <widget class="QComboBox" name="setup_channel_2_syringe_input"/>
+              <widget class="QComboBox" name="setup_channel_2_syringe_input">
+               <property name="font">
+                <font>
+                 <pointsize>15</pointsize>
+                </font>
+               </property>
+              </widget>
              </item>
              <item>
               <widget class="QComboBox" name="setup_channel_2_unit_input">
                <property name="enabled">
                 <bool>false</bool>
                </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QDoubleSpinBox" name="setup_channel_2_accel_input">
-               <property name="maximum">
-                <double>99999.990000000005239</double>
+               <property name="font">
+                <font>
+                 <pointsize>15</pointsize>
+                </font>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="setup_channel_2_send_settings_button">
-               <property name="text">
-                <string>Send</string>
+              <widget class="QDoubleSpinBox" name="setup_channel_2_accel_input">
+               <property name="font">
+                <font>
+                 <pointsize>15</pointsize>
+                </font>
+               </property>
+               <property name="maximum">
+                <double>99999.990000000005239</double>
                </property>
               </widget>
              </item>
@@ -1593,31 +2001,45 @@
           </item>
           <item>
            <widget class="QGroupBox" name="setup_channel_3_group">
+            <property name="font">
+             <font>
+              <pointsize>15</pointsize>
+             </font>
+            </property>
             <property name="title">
              <string>Channel 3</string>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_8">
              <item>
-              <widget class="QComboBox" name="setup_channel_3_syringe_input"/>
+              <widget class="QComboBox" name="setup_channel_3_syringe_input">
+               <property name="font">
+                <font>
+                 <pointsize>15</pointsize>
+                </font>
+               </property>
+              </widget>
              </item>
              <item>
               <widget class="QComboBox" name="setup_channel_3_unit_input">
                <property name="enabled">
                 <bool>false</bool>
                </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QDoubleSpinBox" name="setup_channel_3_accel_input">
-               <property name="maximum">
-                <double>99999.990000000005239</double>
+               <property name="font">
+                <font>
+                 <pointsize>15</pointsize>
+                </font>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="setup_channel_3_send_settings_button">
-               <property name="text">
-                <string>Send</string>
+              <widget class="QDoubleSpinBox" name="setup_channel_3_accel_input">
+               <property name="font">
+                <font>
+                 <pointsize>15</pointsize>
+                </font>
+               </property>
+               <property name="maximum">
+                <double>99999.990000000005239</double>
                </property>
               </widget>
              </item>
@@ -1648,6 +2070,11 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="font">
+               <font>
+                <pointsize>15</pointsize>
+               </font>
+              </property>
               <property name="text">
                <string>Connect</string>
               </property>
@@ -1660,6 +2087,11 @@
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+              <property name="font">
+               <font>
+                <pointsize>15</pointsize>
+               </font>
               </property>
               <property name="acceptDrops">
                <bool>true</bool>
@@ -1676,6 +2108,11 @@
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+              <property name="font">
+               <font>
+                <pointsize>15</pointsize>
+               </font>
               </property>
               <property name="text">
                <string>   Toggle Fullscreen</string>
@@ -1745,6 +2182,9 @@ asd
           <height>64</height>
          </size>
         </property>
+        <attribute name="buttonGroup">
+         <string notr="true">side_control_buttons</string>
+        </attribute>
        </widget>
       </item>
       <item>
@@ -1774,6 +2214,9 @@ asd
             <height>40</height>
            </size>
           </property>
+          <attribute name="buttonGroup">
+           <string notr="true">side_control_buttons</string>
+          </attribute>
          </widget>
         </item>
         <item>
@@ -1805,6 +2248,9 @@ asd
           <property name="checked">
            <bool>false</bool>
           </property>
+          <attribute name="buttonGroup">
+           <string notr="true">side_control_buttons</string>
+          </attribute>
          </widget>
         </item>
        </layout>
@@ -2453,4 +2899,8 @@ asd
  </widget>
  <resources/>
  <connections/>
+ <buttongroups>
+  <buttongroup name="sequence_control_buttons"/>
+  <buttongroup name="side_control_buttons"/>
+ </buttongroups>
 </ui>

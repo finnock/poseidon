@@ -10,9 +10,8 @@ class PoseidonConfig:
         config = configparser.ConfigParser()
 
         config['connection'] = {
-            'COM-port': '',
+            'com-port': '',
             'baudrate': 230400,
-            'microsteps': 32,
             'auto-connect': False
         }
 
@@ -20,11 +19,14 @@ class PoseidonConfig:
             'fullscreen': False,
             'jog-distance': 10,
             'jog-speed': 10,
+            'mm-per-rotation': 2,
+            'steps-per-rotation': 200,
+            'microsteps': 32
         }
 
         config['syringe-channel-1'] = {
             # TODO: get size from dynamically created list / file / whatever
-            'size': '',
+            'size': '500 mL',
             'speed': 0,
             'volume': 0,
             'acceleration': 5,

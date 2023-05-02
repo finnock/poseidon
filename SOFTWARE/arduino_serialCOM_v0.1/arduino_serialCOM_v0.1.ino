@@ -172,6 +172,8 @@ unsigned long curMillis;
 unsigned long prevReplyToPCmillis = 0;
 unsigned long replyToPCinterval = 1000;
 
+int feedbackCounter = 10000;
+
 //=============
 // Setup is only called once. When we start up the GUI the Arduino initalizes with a BAUD Rate of _________
 void setup() {
@@ -196,10 +198,14 @@ void setup() {
   // tell the PC we are ready
   pinMode(ENPin, OUTPUT);
   digitalWrite(ENPin, HIGH);
+
+  stepper1.setCurrentPosition(0.0);
+  stepper2.setCurrentPosition(0.0);
+  stepper3.setCurrentPosition(0.0);
+
   Serial.println("EN Pin to HIGH");
 
   Serial.println("<Arduino Board is ready>");
-
 
 }
 
@@ -207,11 +213,28 @@ void setup() {
 // The loop function is what is always running and refreshes BAUD_RATE times per second
 void loop() {
   curMillis = millis();
+  stepper1.run();
+  stepper2.run();
+  stepper3.run();
   getDataFromPC();
-  // Now is when we determine which mode we are in which dictates which function to call
-  //replyToPC();
-  //executeThisFunction();
-  //replyToPC();
+
+  if (feedbackCounter > 9999){
+    Serial.print("POS p1:");
+    Serial.print(stepper1.currentPosition());
+    Serial.print(" r1:");
+    Serial.print(stepper1.distanceToGo());
+    Serial.print(" p2:");
+    Serial.print(stepper2.currentPosition());
+    Serial.print(" r2:");
+    Serial.print(stepper2.distanceToGo());
+    Serial.print(" p3:");
+    Serial.print(stepper3.currentPosition());
+    Serial.print(" r3:");
+    Serial.println(stepper3.distanceToGo());
+    feedbackCounter = 0;
+  } else {
+    feedbackCounter++;
+  }
 }
 
 //=============
@@ -366,17 +389,10 @@ void executeThisFunction() {
 
   else if (strcmp(mode, "SETTING") == 0) {
     return udpateSettings();
-    //Serial.print("UPDATING SETTINGS\n");
   }
 
   else if (strcmp(mode, "RUN") == 0) {
-    // Check if any stepper is currently running and do not allow execution if that is the case
-    //if (!stepper1.isRunning()) {
-      if (strcmp(setting, "DIST") == 0) {
-        return runFew();
-     // }
-    }
-
+    return runFew();
   }
 
   else if (strcmp(mode, "PAUSE") == 0) {
@@ -385,6 +401,10 @@ void executeThisFunction() {
 
   else if (strcmp(mode, "RESUME") == 0) {
     return runFew();
+  }
+
+  else if (strcmp(mode, "ZERO") == 0) {
+    return zero();
   }
 }
 
@@ -421,48 +441,11 @@ void replyToPC() {
 }
 
 
-// Here we want to send our current distance to the PC
-// We send the motor ID and then print out distance left
-// This returns the step difference between where we are at now and where we want to be.
-// Since the Baud Rate is larger than the speed of rotation for max motor speed
-// we return the distance left only if it changes otherwise it would print out the same
-// number a million times
-void sendDistanceToPC(int mID) {
-  switch (mID) {
-    case 1:
-      if (stepper1.distanceToGo() != oldDistanceLeft1) {
-        Serial.print("<DISP1|");
-        Serial.print(stepper1.distanceToGo());
-        Serial.print(">");
-      }
-      oldDistanceLeft1 = stepper1.distanceToGo();
-      break;
-    case 2:
-      if (stepper2.distanceToGo() != oldDistanceLeft2) {
-        Serial.print("<DISP2|");
-        Serial.print(stepper2.distanceToGo());
-        Serial.print(">");
-      }
-      oldDistanceLeft2 = stepper2.distanceToGo();
-      break;
-    case 3:
-      if (stepper3.distanceToGo() != oldDistanceLeft3) {
-        Serial.print("<DISP3|");
-        Serial.print(stepper3.distanceToGo());
-        Serial.print(">");
-      }
-      oldDistanceLeft3 = stepper3.distanceToGo();
-      break;
-  }
-}
 //============
 // Update the settings for each stepper. This is run before performing any moving functions
 // It sets the speed, accel, and jog delta for each pump
 
 void udpateSettings() {
-  stepper1.setCurrentPosition(0.0);
-  stepper2.setCurrentPosition(0.0);
-  stepper3.setCurrentPosition(0.0);
 
   if (!strcmp(setting, "ENABLE")) {
       digitalWrite(ENPin, !value);                // If value = 1 the motors should be enabled. Since LOW (=0) enabled the motors it needs to be inverted
@@ -510,6 +493,18 @@ void udpateSettings() {
   clearVariables();
 }
 
+void zero() {
+  if (motors[0] == 1) {
+    stepper1.setCurrentPosition(0.0);
+  }
+  if (motors[1] == 1) {
+    stepper2.setCurrentPosition(0.0);
+  }
+  if (motors[2] == 1) {
+    stepper3.setCurrentPosition(0.0);
+  }
+}
+
 //======================================
 // The main function for moving the pumps. Takes in a displacement (in steps) and then moves that much
 // For now this is implemented in a constant speed (acceleration is zero except for start and stop where it is max)
@@ -532,7 +527,7 @@ int array_sum(int * array, int len) {
 void runFew() {
   // First we determine the direction of movement. If 1, then it's forward, otherwise it's -1.
   // We use 1 and -1 so that we can multiply any number and reverse the math, minimizing lines of code
-  AccelStepper steppers[3] = {stepper1, stepper2, stepper3};
+  AccelStepper *steppers[3] = {&stepper1, &stepper2, &stepper3};
 
   int direction = 1;
   if (strcmp(dir, "B") == 0) {
@@ -551,46 +546,10 @@ void runFew() {
   for (int i = 0; i < 3; i += 1) {
     if (motors[i] == 1) {
       toMove = direction * distances[i];
-      Serial.print("Sedding tomove command: ");
+      Serial.print("Sending stepper.moveTo command: ");
       Serial.println(toMove);
-      steppers[i].move(toMove);
+      steppers[i]->moveTo(toMove);
     }
-  }
-  // Finally the main loop where we move and check the steppers status
-  // We declare an array to store the status of each stepper
-  int stepperStatus[3] = {0, 0, 0};
-  // Then we loop until that sum is equal to the number of selected steppers
-  // That number is stored in the motors array, 1 for selected, 0 otherwise
-  // If we have 1 and 3 for example motors = [1, 0, 1] => sum = 2
-  Serial.println("Entering While Loop ");
-  Serial.println(array_sum(stepperStatus, 3));
-
-  Serial.println(motors[0]);
-  Serial.println(motors[1]);
-  Serial.println(motors[2]);
-
-  Serial.println(array_sum(motors, 3));
-
-// 4000 steps == 1 mm
-
-
-  while (array_sum(stepperStatus, 3) != array_sum(motors, 3)) {
-    // We iterate over the 3 possible steppers
-    for (int i = 0; i < 3; i += 1) {
-      // If this stepper is selected
-      if (motors[i] == 1) {
-        // Ask the stepper to move to position at constant speed.
-        if (stepperStatus[i] == 0 ) {
-          steppers[i].run();
-        }
-        // Check if it reached it's position
-        if (steppers[i].distanceToGo() == 0) {
-          // If yes then store that value in the stepperStatus array.
-          stepperStatus[i] = 1;
-        }
-      }
-    }
-    getDataFromPC();
   }
   clearVariables();
 }

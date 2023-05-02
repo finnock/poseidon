@@ -2,6 +2,8 @@ import serial
 import time
 import glob
 import sys
+import traceback
+import re
 from thread import Thread
 
 
@@ -10,13 +12,14 @@ class CannotConnectException(Exception):
 
 
 class Arduino:
-    def __init__(self, config):
+    def __init__(self, config, main):
         # Declaring start, mid, and end marker for sending code to Arduino
         self.START_MARKER = 60  # <
         self.MID_MARKER = 44 	# ,
         self.END_MARKER = 62    # >
 
         self.config = config
+        self.main = main
         self.serial = None
         self.connected = False
 
@@ -25,48 +28,47 @@ class Arduino:
         self.mm_per_revolution = 2
         self.motors_enabled = False
         self.motors_changed_callback = None
+        self.position_update_callback = None
 
     # Connect to the Arduino Board
     def connect(self):
         try:
-            self.port in vars()
-            try:
-                self.serial = serial.Serial()
-                self.serial.port = self.config['connect']['port']
-                self.serial.baudrate = self.config['connect']['baudrate']
-                self.serial.parity = serial.PARITY_NONE
-                self.serial.stopbits = serial.STOPBITS_ONE
-                self.serial.bytesize = serial.EIGHTBITS
-                self.serial.timeout = 1
-                self.serial.open()
+            self.serial = serial.Serial()
+            self.serial.port = self.config['connection']['com-port']
+            self.serial.baudrate = self.config['connection']['baudrate']
+            self.serial.parity = serial.PARITY_NONE
+            self.serial.stopbits = serial.STOPBITS_ONE
+            self.serial.bytesize = serial.EIGHTBITS
+            self.serial.timeout = 1
+            self.serial.open()
 
-                print(f"Arduino> Connect to port: {self.port}")
+            print(f"Arduino> Connect to port: {self.config['connection']['com-port']}")
 
-                # This is a thread that always runs and listens to commands from the Arduino
-                self.global_listener_thread = Thread(self.serial_listener)
-                self.global_listener_thread.finished.connect(lambda:self.thread_finished(self.global_listener_thread))
-                self.global_listener_thread.start()
+            # This is a thread that always runs and listens to commands from the Arduino
+            self.global_listener_thread = Thread(self.serial_listener)
+            self.global_listener_thread.finished.connect(lambda: self.thread_finished_helper(self.global_listener_thread))
+            self.global_listener_thread.start()
 
 
-                # TODO: figure out if 3s is necessary
-                # TODO: move to thread and update UI when received success message
-                time.sleep(2)
-                self.enable_motors()
-                time.sleep(1)
+            # TODO: figure out if 3s is necessary
+            # TODO: move to thread and update UI when received success message
+            time.sleep(2)
+            self.enable_motors()
+            time.sleep(1)
 
-                self.connected = True
-            except:
-                self.connected = False
-                raise CannotConnectException
-        except AttributeError:
+            self.connected = True
+        except Exception as exc:
             self.connected = False
+            traceback.print_exc(exc)
+            raise CannotConnectException
 
     # Disconnect from the Arduino board
     # TODO: figure out how to handle error.. (which error?)
     def disconnect(self):
         print("Arduino> Disconnecting from board..")
-        #self.global_listener_thread.stop()
-        time.sleep(3)
+        self.disable_motors()
+        time.sleep(2)
+        self.global_listener_thread.stop()
         self.serial.close()
         self.connected = False
         print("Arduino> Board has been disconnected")
@@ -79,10 +81,9 @@ class Arduino:
             returns
                 A list of the serial ports available on the system
         """
-        print("Populating ports..")
         if sys.platform.startswith('win'):
             # For speed reason capped to range(50). Increase to 256 if needed.
-            ports = ['COM%s' % (i + 1) for i in range(50)]
+            ports = ['COM%s' % (i + 1) for i in range(256)]
         elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
             # this excludes your current terminal "/dev/tty"
             ports = glob.glob('/dev/tty[A-Za-z]*')
@@ -99,7 +100,11 @@ class Arduino:
                 result.append(port)
             except (OSError, serial.SerialException):
                 pass
-        return result
+
+        if len(result) > 0:
+            return result
+        else:
+            raise EnvironmentError('No suitable ports found')
 
     def send_commands(self, commands):
         thread = Thread(self.send_commands_helper, commands)
@@ -116,10 +121,10 @@ class Arduino:
             # Short sleep time for serial connection to reset
             time.sleep(0.1)
 
-        print("Arduino> Send and receive complete\n\n")
+        print("Arduino> Send complete\n\n")
 
     def thread_finished_helper(self, thread):
-        thread.ui_side_stop_button_clicked()
+        thread.stop()
         print(f"Arduino> Thread finished")
 
     def send_manual_arduino_command(self, operation, operation_type, motors, value, direction, steps):
@@ -127,11 +132,32 @@ class Arduino:
         print(f"Arduino> Executing: {command}")
         self.send_commands([command])
 
+    def return_manual_arduino_command(self, operation, operation_type, motors, value, direction, steps):
+        command = f"<{operation},{operation_type},{motors},{value},{direction},{steps[0]},{steps[1]},{steps[2]}>"
+        return command
+
     def serial_listener(self):
-        while True:
+        while self.global_listener_thread.runs:
             line = self.serial.readline()
             if len(line) > 0:
-                print(line.decode('ascii').replace('\r\n', ''))
+                # Decode and trim
+                line = line.decode('ascii').replace('\r\n', '')
+
+                # Printout (move to log)
+                # print(f"Serial> {line}")
+
+                # Split line at spaces
+                line_split = re.split(' |:', line)
+
+                # POS feedback
+                if line_split[0] == 'POS':
+                    pos1 = int(line_split[2])
+                    rem1 = int(line_split[4])
+                    pos2 = int(line_split[6])
+                    rem2 = int(line_split[8])
+                    pos3 = int(line_split[10])
+                    rem3 = int(line_split[12])
+                    self.position_update_callback(pos1, rem1, pos2, rem2, pos3, rem3)
 
 
     # #########################################################
@@ -140,7 +166,7 @@ class Arduino:
     # Expose motor functionality to software on API level
     # #########################################################
 
-    def jog(self, motor_channel, direction, distance):
+    def jog(self, motor_channel, position_in_steps, speed_in_steps_per_s):
         """ Jogs the given channel in a given direction and distance
 
         Parameters
@@ -149,14 +175,17 @@ class Arduino:
             The channel which should be manipulated (1..3)
         direction : string
             The direction in which the motor should be moved. 1 for FORWARD, 0 for BACKWARD.
-        distance : float
+        distance_in_mm : float
             The distance by which the motor should be moved, given in mm.
         """
 
         distances = [0.0, 0.0, 0.0]
-        distances[motor_channel - 1] = distance * 200 * 32
+        distances[motor_channel - 1] = position_in_steps
 
-        self.send_manual_arduino_command('RUN', 'DIST', "1", 1, direction, distances)
+        # TODO: Add speed setting change and waiter? thread?
+        speed_command = self.return_manual_arduino_command('SETTING', 'SPEED', motor_channel, speed_in_steps_per_s, 'F', [0,0,0])
+        jog_command = self.return_manual_arduino_command('RUN', 'DIST', motor_channel, 1, 'F', distances)
+        self.send_commands([speed_command, jog_command])
 
     def enable_motors(self):
         """ Enables all motors """

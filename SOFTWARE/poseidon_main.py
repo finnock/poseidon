@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+import time
 from datetime import datetime
 import os
 import serial
@@ -10,6 +10,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog
 import pyautogui
+from qt_material import *
 import configparser
 
 import numpy as np
@@ -39,11 +40,12 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
     # =======================================================
     # INITIALIZING : The UI and setting some needed variables
     # =======================================================
-    def __init__(self):
+    def __init__(self, app):
         super(MainWindow, self).__init__()
-
-        # creating Arduino connection object
-        self.arduino = Arduino()
+        self.app = app
+        apply_stylesheet(self.app, theme="custom_dark_red.xml", extra={
+            'density_scale': '0'
+        })
 
         # Setting the UI to a class variable and connecting all GUI Components
         self.ui = poseidon_controller_gui.Ui_MainWindow()
@@ -52,44 +54,49 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         # initialize config parser module and start config load routine
         self.config = self.ui_setup_load_settings_button_clicked()
 
+
+        # creating Arduino connection object
+        self.arduino = Arduino(self.config, self)
+
         # Put comments here
         # Populate drop-down UI Objects
-        self.populate_microstepping()
         self.populate_syringe_sizes()
         self.populate_pump_units()
 
         # Set up Syringe Channels
-        self.syringe_channel_1 = SyringeChannel(self, 1)
-        self.syringe_channel_2 = SyringeChannel(self, 2)
-        self.syringe_channel_3 = SyringeChannel(self, 3)
+        self.syringe_channel_1 = SyringeChannel(self, 1, self.config)
+        self.syringe_channel_2 = SyringeChannel(self, 2, self.config)
+        self.syringe_channel_3 = SyringeChannel(self, 3, self.config)
+        self.syringes = [self.syringe_channel_1, self.syringe_channel_2, self.syringe_channel_3]
 
-        sc = self.syringe_channel_1
-        sc_config = self.config['syringe_channel_1']
-        sc.syringe_size = sc_config['size']
-        sc.syringe_area = self.syringe_options[sc.syringe_size]['area']
-        sc.syringe_total_volume = self.syringe_options[sc.syringe_size]['volume']
+        self.ui.channel_1_slider.setMaximum(int(self.syringe_channel_1.mm_to_steps(300)))
+        self.ui.channel_1_slider.setValue(0)
+        self.ui.channel_2_slider.setMaximum(int(self.syringe_channel_2.mm_to_steps(300)))
+        self.ui.channel_2_slider.setValue(0)
+        self.ui.channel_3_slider.setMaximum(int(self.syringe_channel_3.mm_to_steps(300)))
+        self.ui.channel_3_slider.setValue(0)
 
-        sc = self.syringe_channel_2
-        sc_config = self.config['syringe_channel_2']
-        sc.syringe_size = sc_config['size']
-        sc.syringe_area = self.syringe_options[sc.syringe_size]['area']
-        sc.syringe_total_volume = self.syringe_options[sc.syringe_size]['volume']
-
-        sc = self.syringe_channel_3
-        sc_config = self.config['syringe_channel_3']
-        sc.syringe_size = sc_config['size']
-        sc.syringe_area = self.syringe_options[sc.syringe_size]['area']
-        sc.syringe_total_volume = self.syringe_options[sc.syringe_size]['volume']
+        for channel_number in [1, 2, 3]:
+            sc = self.syringes[channel_number - 1]
+            sc.syringe_size = self.config[f"syringe-channel-{channel_number}"]['size']
+            sc.syringe_area = self.syringe_options[sc.syringe_size]['area']
+            sc.syringe_total_volume = self.syringe_options[sc.syringe_size]['volume']
 
         # Connect all UI Objects to the necessary functions
         self.connect_all_gui_components()
 
         # Disable all UI Elements which cant be used as long as the Arduino is not connected
-        self.grey_out_components()
+        self.ui_disable_components_when_disconnected()
 
         # Initializing multithreading to allow parallel operations
         self.threadpool = QtCore.QThreadPool()
         print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
+
+        self.ui_update_thread = Thread(self.ui_update_syringe_channel_position_displays)
+        self.ui_update_thread.start()
+
+        if self.config['connection']['auto-connect'] == 'True':
+            self.ui_setup_connect_button_clicked()
 
     def keystroke(self, key):
         pyautogui.press(key)
@@ -108,37 +115,74 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         # SIDE : CONTROLS + NUMPAD
         # ~~~~~~~~~~~~~~~~~~~~~~~~
 
-        self.arduino.motors_changed = self.motor_state_change
-        self.ui.motor_state_button.clicked.connect(self.toggle_motor_state)
+        self.arduino.motors_changed_callback = self.ui_update_motor_state
+        self.arduino.position_update_callback = self.callback_position_update
+        self.ui.side_motors_button.clicked.connect(self.ui_toggle_motor_state_clicked)
 
-        self.ui.numpad_1_BTN.clicked.connect(lambda: self.keystroke('1'))
-        self.ui.numpad_2_BTN.clicked.connect(lambda: self.keystroke('2'))
-        self.ui.numpad_3_BTN.clicked.connect(lambda: self.keystroke('3'))
-        self.ui.numpad_4_BTN.clicked.connect(lambda: self.keystroke('4'))
-        self.ui.numpad_5_BTN.clicked.connect(lambda: self.keystroke('5'))
-        self.ui.numpad_6_BTN.clicked.connect(lambda: self.keystroke('6'))
-        self.ui.numpad_7_BTN.clicked.connect(lambda: self.keystroke('7'))
-        self.ui.numpad_8_BTN.clicked.connect(lambda: self.keystroke('8'))
-        self.ui.numpad_9_BTN.clicked.connect(lambda: self.keystroke('9'))
-        self.ui.numpad_delete_BTN.clicked.connect(lambda: self.keystroke('backspace'))
-        self.ui.numpad_komma_BTN.clicked.connect(lambda: self.keystroke('.'))
+        self.ui.side_num_pad_0_button.clicked.connect(lambda: self.keystroke('0'))
+        self.ui.side_num_pad_1_button.clicked.connect(lambda: self.keystroke('1'))
+        self.ui.side_num_pad_2_button.clicked.connect(lambda: self.keystroke('2'))
+        self.ui.side_num_pad_3_button.clicked.connect(lambda: self.keystroke('3'))
+        self.ui.side_num_pad_4_button.clicked.connect(lambda: self.keystroke('4'))
+        self.ui.side_num_pad_5_button.clicked.connect(lambda: self.keystroke('5'))
+        self.ui.side_num_pad_6_button.clicked.connect(lambda: self.keystroke('6'))
+        self.ui.side_num_pad_7_button.clicked.connect(lambda: self.keystroke('7'))
+        self.ui.side_num_pad_8_button.clicked.connect(lambda: self.keystroke('8'))
+        self.ui.side_num_pad_9_button.clicked.connect(lambda: self.keystroke('9'))
+        self.ui.side_num_pad_delete_button.clicked.connect(lambda: self.keystroke('backspace'))
+        self.ui.side_num_pad_comma_button.clicked.connect(lambda: self.keystroke('.'))
 
         # ~~~~~~~~~~~~~~~~
         # TAB : Controller
         # ~~~~~~~~~~~~~~~~
+
+        self.ui.channel_1_jog_left_button.clicked.connect(lambda: self.jog(1, -1))
+        self.ui.channel_1_jog_right_button.clicked.connect(lambda: self.jog(1, 1))
+        self.ui.channel_2_jog_left_button.clicked.connect(lambda: self.jog(2, -1))
+        self.ui.channel_2_jog_right_button.clicked.connect(lambda: self.jog(2, 1))
+        self.ui.channel_3_jog_left_button.clicked.connect(lambda: self.jog(3, -1))
+        self.ui.channel_3_jog_right_button.clicked.connect(lambda: self.jog(3, 1))
+
+        self.ui.channel_1_end_button.clicked.connect(lambda: self.run(1))
+        self.ui.channel_2_end_button.clicked.connect(lambda: self.run(2))
+        self.ui.channel_3_end_button.clicked.connect(lambda: self.run(3))
+
+        for vol_input, spd_input, sc in [
+            (self.ui.channel_1_volume_input, self.ui.channel_1_speed_input, self.syringe_channel_1),
+            (self.ui.channel_2_volume_input, self.ui.channel_2_speed_input, self.syringe_channel_2),
+            (self.ui.channel_3_volume_input, self.ui.channel_3_speed_input, self.syringe_channel_3),
+        ]:
+            syringe_option = self.syringe_options[sc.syringe_size]
+
+            vol_input.setDecimals(syringe_option['volume-decimals'])
+            vol_input.setMaximum(syringe_option['volume-maximum'])
+            vol_input.setSingleStep(syringe_option['volume-step'])
+            vol_input.setValue(float(self.config[f"syringe-channel-{sc.channel_number}"]['volume']))
+
+            spd_input.setDecimals(syringe_option['speed-decimals'])
+            spd_input.setMaximum(syringe_option['speed-maximum'])
+            spd_input.setSingleStep(syringe_option['speed-step'])
+            spd_input.setValue(float(self.config[f"syringe-channel-{sc.channel_number}"]['speed']))
+
+        self.ui.jog_delta_input.setValue(float(self.config['misc']['jog-distance']))
+        self.ui.jog_delta_speed_input.setValue(float(self.config['misc']['jog-speed']))
 
         # ~~~~~~~~~~~
         # TAB : Setup
         # ~~~~~~~~~~~
 
         # Port, first populate it then connect it (population done earlier)
-        self.ui.setup_refresh_ports_button.clicked.connect(self.refresh_ports)
-        self.ui.setup_port_input.currentIndexChanged.connect(self.ui_setup_port_input_changed)
-        self.refresh_ports()
-        self.ui.setup_refresh_ports_button.clicked.connect(self.ui_setup_port_refresh_button_clicked)
-        self.ui.setup_port_input.currentIndexChanged.connect(self.ui_update_config)
+        if self.config['connection']['com-port'] == '':
+            self.ui_setup_port_refresh_button_clicked()
+        else:
+            self.ui.setup_port_input.addItem(self.config['connection']['com-port'])
 
-        # Set the microstepping value, default is 1
+        self.ui.setup_refresh_ports_button.clicked.connect(self.ui_setup_port_refresh_button_clicked)
+        self.ui.setup_port_input.currentIndexChanged.connect(self.ui_setup_port_input_changed)
+        # TODO: generic update function?
+        # self.ui.setup_port_input.currentIndexChanged.connect(self.ui_update_config)
+
+        # Set the microstepping value
         self.ui.setup_microstepping_input.currentIndexChanged.connect(self.ui_setup_microsteps_input_changed)
         self.populate_microstepping()
 
@@ -147,293 +191,146 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.ui.setup_save_settings_button.clicked.connect(self.ui_setup_save_settings_button_clicked)
 
         # Toggle Fullscreen Mode
-        self.ui.toggle_fullscreen_BTN.clicked.connect(self.toggle_fullscreen)
-
-        # Px syringe size, populate then connect (population done earlier)
-        self.ui.p1_syringe_DROPDOWN.currentIndexChanged.connect(self.set_p1_syringe)
-        self.ui.p2_syringe_DROPDOWN.currentIndexChanged.connect(self.set_p2_syringe)
-        self.ui.p3_syringe_DROPDOWN.currentIndexChanged.connect(self.set_p3_syringe)
-
-        # warning to send the info to the controller
-        self.ui.p1_syringe_DROPDOWN.currentIndexChanged.connect(self.send_p1_warning)
-        self.ui.p2_syringe_DROPDOWN.currentIndexChanged.connect(self.send_p2_warning)
-        self.ui.p3_syringe_DROPDOWN.currentIndexChanged.connect(self.send_p3_warning)
-
-        # Px units
-        self.ui.p1_units_DROPDOWN.currentIndexChanged.connect(self.set_p1_units)
-        self.ui.p2_units_DROPDOWN.currentIndexChanged.connect(self.set_p2_units)
-        self.ui.p3_units_DROPDOWN.currentIndexChanged.connect(self.set_p3_units)
-
-        # warning to send the info to the controller
-        self.ui.p1_units_DROPDOWN.currentIndexChanged.connect(self.send_p1_warning)
-        self.ui.p2_units_DROPDOWN.currentIndexChanged.connect(self.send_p2_warning)
-        self.ui.p3_units_DROPDOWN.currentIndexChanged.connect(self.send_p3_warning)
-
-        # Px speed
-        self.ui.p1_speed_INPUT.valueChanged.connect(self.set_p1_speed)
-        self.ui.p2_speed_INPUT.valueChanged.connect(self.set_p2_speed)
-        self.ui.p3_speed_INPUT.valueChanged.connect(self.set_p3_speed)
-
-        # warning to send the info to the controller
-        self.ui.p1_speed_INPUT.valueChanged.connect(self.send_p1_warning)
-        self.ui.p2_speed_INPUT.valueChanged.connect(self.send_p2_warning)
-        self.ui.p3_speed_INPUT.valueChanged.connect(self.send_p3_warning)
-
-        # Px accel
-        self.ui.p1_accel_INPUT.valueChanged.connect(self.set_p1_accel)
-        self.ui.p2_accel_INPUT.valueChanged.connect(self.set_p2_accel)
-        self.ui.p3_accel_INPUT.valueChanged.connect(self.set_p3_accel)
-
-        # warning to send the info to the controller
-        self.ui.p1_accel_INPUT.valueChanged.connect(self.send_p1_warning)
-        self.ui.p2_accel_INPUT.valueChanged.connect(self.send_p2_warning)
-        self.ui.p3_accel_INPUT.valueChanged.connect(self.send_p3_warning)
-
-        # Px jog delta (setup)
-        self.ui.p1_setup_jog_delta_INPUT.currentIndexChanged.connect(self.set_p1_setup_jog_delta)
-        self.ui.p2_setup_jog_delta_INPUT.currentIndexChanged.connect(self.set_p2_setup_jog_delta)
-        self.ui.p3_setup_jog_delta_INPUT.currentIndexChanged.connect(self.set_p3_setup_jog_delta)
-
-        # warning to send the info to the contorller
-        self.ui.p1_setup_jog_delta_INPUT.currentIndexChanged.connect(self.send_p1_warning)
-        self.ui.p2_setup_jog_delta_INPUT.currentIndexChanged.connect(self.send_p2_warning)
-        self.ui.p3_setup_jog_delta_INPUT.currentIndexChanged.connect(self.send_p3_warning)
-
-        # Px send settings
-        self.ui.p1_setup_send_BTN.clicked.connect(self.send_p1_settings)
-        self.ui.p2_setup_send_BTN.clicked.connect(self.send_p2_settings)
-        self.ui.p3_setup_send_BTN.clicked.connect(self.send_p3_settings)
-
-        # remove warning to send settings
-        self.ui.p1_setup_send_BTN.clicked.connect(self.send_p1_success)
-        self.ui.p2_setup_send_BTN.clicked.connect(self.send_p2_success)
-        self.ui.p3_setup_send_BTN.clicked.connect(self.send_p3_success)
+        self.ui.setup_toggle_fullscreen_button.clicked.connect(self.ui_setup_toggle_fullscreen_button_clicked)
 
         # Connect to arduino
         self.ui.setup_connect_button.clicked.connect(self.ui_setup_connect_button_clicked)
 
         # Send all the settings at once
-        self.ui.send_all_BTN.clicked.connect(self.send_all)
+        self.ui.setup_send_all_settings_button.clicked.connect(self.send_all)
 
     def ui_update_motor_state(self):
         self.ui.side_motors_button.setChecked(self.arduino.motors_enabled)
 
-    def toggle_motor_state(self):
+    def ui_toggle_motor_state_clicked(self):
         self.arduino.toggle_motors()
 
-    def send_p1_warning(self):
-        self.ui.p1_setup_send_BTN.setStyleSheet("background-color: green; color: black")
+    def ui_disable_components_when_disconnected(self):
+        # get the connection state from the arduino controller
+        connected = self.arduino.connected
 
-    def send_p2_warning(self):
-        self.ui.p2_setup_send_BTN.setStyleSheet("background-color: green; color: black")
+        for button in self.ui.side_control_buttons.buttons():
+            button.setEnabled(connected)
 
-    def send_p3_warning(self):
-        self.ui.p3_setup_send_BTN.setStyleSheet("background-color: green; color: black")
+        for button in self.ui.sequence_control_buttons.buttons():
+            button.setEnabled(connected)
 
-    def send_p1_success(self):
-        self.ui.p1_setup_send_BTN.setStyleSheet("background-color: none")
+        self.ui.setup_send_all_settings_button.setEnabled(connected)
 
-    def send_p2_success(self):
-        self.ui.p2_setup_send_BTN.setStyleSheet("background-color: none")
-
-    def send_p3_success(self):
-        self.ui.p3_setup_send_BTN.setStyleSheet("background-color: none")
-
-    def grey_out_components(self):
-        # ~~~~~~~~~~~~~~~~
-        # TAB : Controller
-        # ~~~~~~~~~~~~~~~~
-        self.ui.run_BTN.setEnabled(False)
-        self.ui.pause_BTN.setEnabled(False)
-        self.ui.zero_BTN.setEnabled(False)
-        self.ui.stop_BTN.setEnabled(False)
-        self.ui.jog_plus_BTN.setEnabled(False)
-        self.ui.jog_minus_BTN.setEnabled(False)
-
-        # ~~~~~~~~~~~~~~~~
-        # TAB : Setup
-        # ~~~~~~~~~~~~~~~~
-        self.ui.p1_setup_send_BTN.setEnabled(False)
-        self.ui.p2_setup_send_BTN.setEnabled(False)
-        self.ui.p3_setup_send_BTN.setEnabled(False)
-        self.ui.send_all_BTN.setEnabled(False)
-
-    def ungrey_out_components(self):
-        # ~~~~~~~~~~~~~~~~
-        # TAB : Controller
-        # ~~~~~~~~~~~~~~~~
-        self.ui.run_BTN.setEnabled(True)
-        self.ui.pause_BTN.setEnabled(True)
-        self.ui.zero_BTN.setEnabled(True)
-        self.ui.stop_BTN.setEnabled(True)
-        self.ui.jog_plus_BTN.setEnabled(True)
-        self.ui.jog_minus_BTN.setEnabled(True)
-
-        self.ui.run_BTN.setStyleSheet("background-color: green; color: black")
-        self.ui.pause_BTN.setStyleSheet("background-color: yellow; color: black")
-        self.ui.stop_BTN.setStyleSheet("background-color: red; color: black")
-
-        # ~~~~~~~~~~~~~~~~
-        # TAB : Setup
-        # ~~~~~~~~~~~~~~~~
-        self.ui.p1_setup_send_BTN.setEnabled(True)
-        self.ui.p2_setup_send_BTN.setEnabled(True)
-        self.ui.p3_setup_send_BTN.setEnabled(True)
-        self.ui.send_all_BTN.setEnabled(True)
     # ======================
     # FUNCTIONS : Controller
     # ======================
 
-    def toggle_p1_activation(self):
-        if self.ui.p1_activate_CHECKBOX.isChecked():
-            self.is_p1_active = True
-        else:
-            self.is_p1_active = False
-
-    def toggle_p2_activation(self):
-        if self.ui.p2_activate_CHECKBOX.isChecked():
-            self.is_p2_active = True
-        else:
-            self.is_p2_active = False
-
-    def toggle_p3_activation(self):
-        if self.ui.p3_activate_CHECKBOX.isChecked():
-            self.is_p3_active = True
-        else:
-            self.is_p3_active = False
-
-    # Get a list of active pumps (IDK if this is the best way to do this)
-    def get_active_pumps(self):
-        pumps_list = [self.is_p1_active, self.is_p2_active, self.is_p3_active]
-        active_pumps = [i+1 for i in range(len(pumps_list)) if pumps_list[i]]
-        return active_pumps
-
-    def display_p1_syringe(self):
-        self.ui.p1_syringe_LABEL.setText(self.ui.p1_syringe_DROPDOWN.currentText())
-
-    def display_p2_syringe(self):
-        self.ui.p2_syringe_LABEL.setText(self.ui.p2_syringe_DROPDOWN.currentText())
-
-    def display_p3_syringe(self):
-        self.ui.p3_syringe_LABEL.setText(self.ui.p3_syringe_DROPDOWN.currentText())
-
-    def display_p1_speed(self):
-        self.ui.p1_units_LABEL.setText(str(self.p1_speed) + " " + self.ui.p1_units_DROPDOWN.currentText())
-
-    def display_p2_speed(self):
-        self.ui.p2_units_LABEL.setText(str(self.p2_speed) + " " + self.ui.p2_units_DROPDOWN.currentText())
-
-    def display_p3_speed(self):
-        self.ui.p3_units_LABEL.setText(str(self.p3_speed) + " " + self.ui.p3_units_DROPDOWN.currentText())
-
-    # Set Px distance to move
-    def set_p1_amount(self):
-        self.p1_amount = self.ui.p1_amount_INPUT.value()
-
-    def set_p2_amount(self):
-        self.p2_amount = self.ui.p2_amount_INPUT.value()
-
-    def set_p3_amount(self):
-        self.p3_amount = self.ui.p3_amount_INPUT.value()
-
-    # Set Px jog delta
-    #def set_p1_jog_delta(self):
-    #	self.p1_jog_delta = self.ui.p1_jog_delta_INPUT.value()
-    #def set_p2_jog_delta(self):
-    #	self.p2_jog_delta = self.ui.p2_jog_delta_INPUT.value()
-    #def set_p3_jog_delta(self):
-    #	self.p3_jog_delta = self.ui.p3_jog_delta_INPUT.value()
-
-    # Set the coordinate system for the pump
-    def set_coordinate(self, radio):
-        if radio.text() == "Abs.":
-            if radio.isChecked():
-                self.coordinate = "absolute"
-        if radio.text() == "Incr.":
-            if radio.isChecked():
-                self.coordinate = "incremental"
-
-    def run(self):
-        self.statusBar().showMessage("You clicked RUN")
-        testData = []
-
-        active_pumps = self.get_active_pumps()
-        if len(active_pumps) > 0:
-
-            p1_input_displacement = str(self.convert_displacement(self.p1_amount, self.p1_units, self.p1_syringe_area, self.microstepping))
-            p2_input_displacement = str(self.convert_displacement(self.p2_amount, self.p2_units, self.p2_syringe_area, self.microstepping))
-            p3_input_displacement = str(self.convert_displacement(self.p3_amount, self.p3_units, self.p3_syringe_area, self.microstepping))
-
-            pumps_2_run = ''.join(map(str,active_pumps))
-
-            cmd = "<RUN,DIST,"+pumps_2_run+",0.0,F," + p1_input_displacement + "," + p2_input_displacement + "," + p3_input_displacement + ">"
-
-            testData.append(cmd)
-
-            print("Sending RUN command..")
-            thread = Thread(self.runTest, testData)
-            thread.finished.connect(lambda:self.thread_finished(thread))
-            thread.start()
-            print("RUN command sent.")
-        else:
-            self.statusBar().showMessage("No pumps enabled.")
+    def callback_position_update(self, p1, r1, p2, r2, p3, r3):
+        # Syringe Channel Feedback
+        self.syringe_channel_1.absolute_position = p1
+        self.syringe_channel_1.remaining_volume = r1
+        self.syringe_channel_2.absolute_position = p2
+        self.syringe_channel_2.remaining_volume = r2
+        self.syringe_channel_3.absolute_position = p3
+        self.syringe_channel_3.remaining_volume = r3
 
 
-    # fix
-    def zero(self):
-        self.statusBar().showMessage("You clicked ZERO")
-        testData = []
+    def ui_update_syringe_channel_position_displays(self):
+        while True:
+            p1 = self.syringe_channel_1.absolute_position
+            r1 = self.syringe_channel_1.remaining_volume
+            p2 = self.syringe_channel_2.absolute_position
+            r2 = self.syringe_channel_2.remaining_volume
+            p3 = self.syringe_channel_3.absolute_position
+            r3 = self.syringe_channel_3.remaining_volume
 
-        cmd = "<ZERO,BLAH,BLAH,BLAH,F,0.0,0.0,0.0>"
+            # UI Slider Feedback
+            self.ui.channel_1_slider.setValue(p1)
+            self.ui.channel_2_slider.setValue(p2)
+            self.ui.channel_3_slider.setValue(p3)
 
-        print("Sending ZERO command..")
-        thread = Thread(self.runTest, testData)
-        thread.finished.connect(lambda:self.thread_finished(thread))
-        thread.start()
-        print("ZERO command sent.")
+            # UI LCD Feedback
+            self.ui.channel_1_pos_lcd.display(self.syringe_channel_1.steps_to_mm(p1))
+            self.ui.channel_2_pos_lcd.display(self.syringe_channel_2.steps_to_mm(p2))
+            self.ui.channel_3_pos_lcd.display(self.syringe_channel_3.steps_to_mm(p3))
 
+            # UI LCD Feedback
+            self.ui.channel_1_rem_lcd.display(self.syringe_channel_1.steps_to_ml(r1))
+            self.ui.channel_2_rem_lcd.display(self.syringe_channel_2.steps_to_ml(r2))
+            self.ui.channel_3_rem_lcd.display(self.syringe_channel_3.steps_to_ml(r3))
+
+            time.sleep(0.2)
+
+            self.ui.channel_1_pos_lcd.repaint()
+            self.ui.channel_2_pos_lcd.repaint()
+            self.ui.channel_3_pos_lcd.repaint()
+            self.ui.channel_1_rem_lcd.repaint()
+            self.ui.channel_2_rem_lcd.repaint()
+            self.ui.channel_3_rem_lcd.repaint()
+
+
+    def run(self, channel):
+
+        vol_input, spd_input, syringe = [
+            (self.ui.channel_1_volume_input, self.ui.channel_1_speed_input, self.syringe_channel_1),
+            (self.ui.channel_2_volume_input, self.ui.channel_2_speed_input, self.syringe_channel_2),
+            (self.ui.channel_3_volume_input, self.ui.channel_3_speed_input, self.syringe_channel_3),
+        ][channel - 1]
+
+        self.config[f"syringe-channel-{channel}"]['speed'] = str(spd_input.value())
+        self.config[f"syringe-channel-{channel}"]['volume'] = str(vol_input.value())
+
+        # get run distance in mm from SC Object
+        absolute_position, run_speed = syringe.get_run_parameters()
+
+        lcds = [self.ui.channel_1_speed_lcd, self.ui.channel_2_speed_lcd, self.ui.channel_3_speed_lcd]
+        lcds[channel - 1].display(syringe.steps_to_mm(run_speed))
+
+        self.arduino.jog(channel, absolute_position, run_speed)
+
+    def jog(self, channel, direction):
+        print(f"Main> Jog Command. Forward To Arduino Object")
+
+        self.config['misc']['jog-distance'] = str(self.ui.jog_delta_input.value())
+        self.config['misc']['jog-speed'] = str(self.ui.jog_delta_speed_input.value())
+
+        lcds = [self.ui.channel_1_speed_lcd, self.ui.channel_2_speed_lcd, self.ui.channel_3_speed_lcd]
+        lcds[channel - 1].display(self.config['misc']['jog-speed'])
+
+        absolute_position, jog_speed = self.syringes[channel - 1].get_jog_parameters(direction)
+
+        self.arduino.jog(channel, absolute_position, jog_speed)
 
     def ui_side_stop_button_clicked(self):
         self.statusBar().showMessage("All motors halted")
         self.arduino.stop_movement()
-
-    def jog(self, btn):
-        print(f"Main> Jog Command. Forward To Arduino Object")
-        self.arduino.jog(1, "F", 1)
 
     # ======================
     # FUNCTIONS : Setup
     # ======================
 
     def ui_setup_connect_button_clicked(self):
+        if not self.arduino.connected:
+            try:
+                self.arduino.connect()
+            except AttributeError:
+                self.statusBar().showMessage("Please plug in the board and select a proper port, then press connect.")
+            except CannotConnectException:
+                self.statusBar().showMessage("Cannot connect to board. Try again..")
 
-        try:
-            self.arduino.connect()
-        except AttributeError:
-            self.statusBar().showMessage("Please plug in the board and select a proper port, then press connect.")
-        except CannotConnectException:
-            self.statusBar().showMessage("Cannot connect to board. Try again..")
+            self.statusBar().showMessage("Successfully connected to board.")
 
-        self.statusBar().showMessage("Successfully connected to board.")
+            self.ui.setup_connect_button.setText('Disconnect')
+        else:
+            self.arduino.disconnect()
+            self.ui.setup_connect_button.setText('Connect')
+            self.statusBar().showMessage("Successfully disconnected from board.")
 
-        self.ui.setup_connect_button.setText('Disconnect')
-
-        # Change UI Button states accordingly
-        self.ui.disconnect_BTN.setEnabled(True)
-        self.ui.p1_setup_send_BTN.setEnabled(True)
-        self.ui.p2_setup_send_BTN.setEnabled(True)
-        self.ui.p3_setup_send_BTN.setEnabled(True)
-        self.ui.send_all_BTN.setEnabled(True)
-        self.ui.connect_BTN.setEnabled(False)
+        self.ui_disable_components_when_disconnected()
 
     def click_disconnect_button(self):
         self.statusBar().showMessage("You clicked DISCONNECT FROM BOARD")
 
         self.arduino.disconnect()
 
-        self.grey_out_components()
+        self.ui_disable_components_when_disconnected()
         self.ui.setup_connect_button.setText('Connect')
-
 
     # Refresh the list of ports
     def ui_setup_port_refresh_button_clicked(self):
@@ -444,20 +341,23 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         # TODO: findout if the manual trigger is necessary
         self.ui.setup_port_input.clear()
         self.ui.setup_port_input.addItems(ports)
-        # TODO: check if port from config is found in port list
-        # otherwise set to first port from list
-        self.ui.setup_port_input.setCurrentText(self.config['setup']['port'])
+        config_port = self.config['connection']['com-port']
+        if config_port in ports:
+            self.ui.setup_port_input.setCurrentText(config_port)
+        else:
+            self.ui.setup_port_input.setCurrentText(ports[0])
+
 
     def ui_setup_port_input_changed(self):
         # get the port from UI and forward it to the config and arduino objects.
-        self.config['connect']['port'] = self.ui.setup_port_input.currentText()
+        self.config['connection']['com-port'] = self.ui.setup_port_input.currentText()
 
     # Set the microstepping amount from the dropdown menu
     # TODO: There is definitely a better way of updating different variables
     # after there is a change of some input from the user. need to figure out.
     def ui_setup_microsteps_input_changed(self):
         # get the microsteps setting from UI and forward it to the config and arduino objects.
-        self.config['connect']['microsteps'] = int(self.ui.setup_port_input.currentText())
+        self.config['misc']['microsteps'] = self.ui.setup_microstepping_input.currentText()
 
     def ui_setup_load_settings_button_clicked(self):
         return poseidon_config.PoseidonConfig.load_config()
@@ -470,10 +370,10 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
     def ui_setup_toggle_fullscreen_button_clicked(self):
         if self.isFullScreen():
             self.showNormal()
-            self.config['misc']['fullscreen'] = False
+            self.config['misc']['fullscreen'] = str(False)
         else:
             self.showFullScreen()
-            self.config['misc']['fullscreen'] = True
+            self.config['misc']['fullscreen'] = str(False)
 
 
     # Populate the microstepping amounts for the dropdown menu
@@ -481,7 +381,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         microstepping_values = ['1', '2', '4', '8', '16', '32']
         self.ui.setup_microstepping_input.addItems(microstepping_values)
         self.ui.setup_microstepping_input.setCurrentText('32')
-        self.config['config']['microsteps'] = int(self.ui.setup_microstepping_input.currentText())
+        self.config['misc']['microsteps'] = self.ui.setup_microstepping_input.currentText()
 
     # Populate the list of possible syringes to the dropdown menus
     def populate_syringe_sizes(self):
@@ -492,6 +392,12 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
             '500 mL': {
                 'volume': '500',
                 'area': 3631.681168,
+                'volume-decimals': 0,
+                'volume-maximum': 550,
+                'volume-step': 1,
+                'speed-decimals': 0,
+                'speed-maximum': 9999,
+                'speed-step': 1
             }
         }
 
@@ -513,182 +419,27 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 
     # Send all settings
     def send_all(self):
-        self.statusBar().showMessage("You clicked SEND ALL SETTINGS")
-
-        self.settings = []
-        self.settings.append("<SETTING,SPEED,1,"+str(self.p1_speed_to_send)+",F,0.0,0.0,0.0>")
-        self.settings.append("<SETTING,ACCEL,1,"+str(self.p1_accel_to_send)+",F,0.0,0.0,0.0>")
-
-        self.settings.append("<SETTING,SPEED,2,"+str(self.p2_speed_to_send)+",F,0.0,0.0,0.0>")
-        self.settings.append("<SETTING,ACCEL,2,"+str(self.p2_accel_to_send)+",F,0.0,0.0,0.0>")
-
-        self.settings.append("<SETTING,SPEED,3,"+str(self.p3_speed_to_send)+",F,0.0,0.0,0.0>")
-        self.settings.append("<SETTING,ACCEL,3,"+str(self.p3_accel_to_send)+",F,0.0,0.0,0.0>")
-
-        print("Sending all settings..")
-        self.arduino.send_commands(self.settings)
-
-        self.ui.p1_setup_send_BTN.setStyleSheet("background-color: none")
-        self.ui.p2_setup_send_BTN.setStyleSheet("background-color: none")
-        self.ui.p3_setup_send_BTN.setStyleSheet("background-color: none")
-
-        self.ungrey_out_components()
-
-
-
-    # =======================
-    # MISC : Functions I need
-    # =======================
-
-    def steps2mm(self, steps, microsteps):
-    # 200 steps per rev
-    # one rev is 0.8mm dist
-        #mm = steps/200/32*0.8
-        mm = steps/200/microsteps*0.8
-        return mm
-
-    def steps2mL(self, steps, syringe_area):
-        mL = self.mm32mL(self.steps2mm(steps)*syringe_area)
-        return mL
-
-    def steps2uL(self, steps, syringe_area):
-        uL = self.mm32uL(self.steps2mm(steps)*syringe_area)
-        return uL
-
-
-    def mm2steps(self, mm, microsteps):
-        steps = mm/0.8*200*microsteps
-        #steps = mm*200/0.8
-        return steps
-
-    def mL2steps(self, mL, syringe_area, microsteps):
-        # note syringe_area is in mm^2
-        steps = self.mm2steps(self.mL2mm3(mL)/syringe_area, microsteps)
-        return steps
-
-    def uL2steps(self, uL, syringe_area, microsteps):
-        steps = self.mm2steps(self.uL2mm3(uL)/syringe_area, microsteps)
-        return steps
-
-
-    def mL2uL(self, mL):
-        return mL*1000.0
-
-    def mL2mm3(self, mL):
-        return mL*1000.0
-
-
-    def uL2mL(self, uL):
-        return uL/1000.0
-
-    def uL2mm3(self, uL):
-        return uL
-
-
-    def mm32mL(self, mm3):
-        return mm3/1000.0
-
-    def mm32uL(self, mm3):
-        return mm3
-
-    def persec2permin(self, value_per_sec):
-        value_per_min = value_per_sec*60.0
-        return value_per_min
-
-    def persec2perhour(self, value_per_sec):
-        value_per_hour = value_per_sec*60.0*60.0
-        return value_per_hour
-
-
-    def permin2perhour(self, value_per_min):
-        value_per_hour = value_per_min*60.0
-        return value_per_hour
-
-    def permin2persec(self, value_per_min):
-        value_per_sec = value_per_min/60.0
-        return value_per_sec
-
-
-    def perhour2permin(self, value_per_hour):
-        value_per_min = value_per_hour/60.0
-        return value_per_min
-
-    def perhour2persec(self, value_per_hour):
-        value_per_sec = value_per_hour/60.0/60.0
-        return value_per_sec
-
-    def convert_displacement(self, displacement, units, syringe_area, microsteps):
-        length = units.split("/")[0]
-        time = units.split("/")[1]
-        inp_displacement = displacement
-        # convert length first
-        if length == "mm":
-            displacement = self.mm2steps(displacement, microsteps)
-        elif length == "mL":
-            displacement = self.mL2steps(displacement, syringe_area, microsteps)
-        elif length == "µL":
-            displacement = self.uL2steps(displacement, syringe_area, microsteps)
-
-        print('______________________________')
-        print("INPUT  DISPLACEMENT: " + str(inp_displacement) + ' ' + length)
-        print("OUTPUT DISPLACEMENT: " + str(displacement) + ' steps')
-        print('\n############################################################\n')
-        return displacement
-
-    def convert_speed(self, inp_speed, units, syringe_area, microsteps):
-        length = units.split("/")[0]
-        time = units.split("/")[1]
-
-
-        # convert length first
-        if length == "mm":
-            speed = self.mm2steps(inp_speed, microsteps)
-        elif length == "mL":
-            speed = self.mL2steps(inp_speed, syringe_area, microsteps)
-        elif length == "µL":
-            speed = self.uL2steps(inp_speed, syringe_area, microsteps)
-
-
-        # convert time next
-        if time == "s":
-            pass
-        elif time == "min":
-            speed = self.permin2persec(speed)
-        elif time == "hr":
-            speed = self.perhour2persec(speed)
-
-
-
-        print("INPUT  SPEED: " + str(inp_speed) + ' ' + units)
-        print("OUTPUT SPEED: " + str(speed) + ' steps/s')
-        return speed
-
-    def convert_accel(self, accel, units, syringe_area, microsteps):
-        length = units.split("/")[0]
-        time = units.split("/")[1]
-        inp_accel = accel
-        accel = accel
-
-        # convert length first
-        if length == "mm":
-            accel = self.mm2steps(accel, microsteps)
-        elif length == "mL":
-            accel = self.mL2steps(accel, syringe_area, microsteps)
-        elif length == "µL":
-            accel = self.uL2steps(accel, syringe_area, microsteps)
-
-        # convert time next
-        if time == "s":
-            pass
-        elif time == "min":
-            accel = self.permin2persec(self.permin2persec(accel))
-        elif time == "hr":
-            accel = self.perhour2persec(self.perhour2persec(accel))
-
-        print('______________________________')
-        print("INPUT  ACCEL: " + str(inp_accel) + ' ' + units + '/' + time)
-        print("OUTPUT ACCEL: " + str(accel) + ' steps/s/s')
-        return accel
+        pass
+        # self.statusBar().showMessage("You clicked SEND ALL SETTINGS")
+        #
+        # self.settings = []
+        # self.settings.append("<SETTING,SPEED,1,"+str(self.p1_speed_to_send)+",F,0.0,0.0,0.0>")
+        # self.settings.append("<SETTING,ACCEL,1,"+str(self.p1_accel_to_send)+",F,0.0,0.0,0.0>")
+        #
+        # self.settings.append("<SETTING,SPEED,2,"+str(self.p2_speed_to_send)+",F,0.0,0.0,0.0>")
+        # self.settings.append("<SETTING,ACCEL,2,"+str(self.p2_accel_to_send)+",F,0.0,0.0,0.0>")
+        #
+        # self.settings.append("<SETTING,SPEED,3,"+str(self.p3_speed_to_send)+",F,0.0,0.0,0.0>")
+        # self.settings.append("<SETTING,ACCEL,3,"+str(self.p3_accel_to_send)+",F,0.0,0.0,0.0>")
+        #
+        # print("Sending all settings..")
+        # self.arduino.send_commands(self.settings)
+        #
+        # self.ui.p1_setup_send_BTN.setStyleSheet("background-color: none")
+        # self.ui.p2_setup_send_BTN.setStyleSheet("background-color: none")
+        # self.ui.p3_setup_send_BTN.setStyleSheet("background-color: none")
+        #
+        # self.ungrey_out_components()
 
 
     '''
@@ -707,8 +458,8 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 
     def closeEvent(self, event):
         try:
-            self.global_listener_thread.ui_side_stop_button_clicked()
-            self.serial.close()
+            if self.arduino.connected:
+                self.arduino.disconnect()
             #self.threadpool.end()
 
         except AttributeError:
@@ -719,7 +470,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 def main():
     # a new app instance
     app = QtWidgets.QApplication(sys.argv)
-    window = MainWindow()
+    window = MainWindow(app)
     window.setWindowTitle("Poseidon Pumps Controller - Fischer Lab Fork 2023")
     window.show()
     # without this, the script exits immediately.
