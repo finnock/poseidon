@@ -194,6 +194,8 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.ui.jog_delta_input.setValue(float(self.config['misc']['jog-distance']))
         self.ui.jog_delta_speed_input.setValue(float(self.config['misc']['jog-speed']))
 
+        self.ui.side_play_pause_button.clicked.connect(self.run_sequence)
+
         # ~~~~~~~~~~~
         # TAB : Setup
         # ~~~~~~~~~~~
@@ -283,9 +285,11 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
             self.ui.channel_2_rem_lcd.display(self.syringe_channel_2.steps_to_ml(r2))
             self.ui.channel_3_rem_lcd.display(self.syringe_channel_3.steps_to_ml(r3))
 
-            # print('Before Sleep')
+            self.syringe_channel_1.running = (r1 > 0)
+            self.syringe_channel_2.running = (r2 > 0)
+            self.syringe_channel_3.running = (r3 > 0)
+
             time.sleep(0.2)
-            # print('After Sleep')
 
             # self.ui.channel_1_pos_lcd.repaint()
             # self.ui.channel_2_pos_lcd.repaint()
@@ -326,6 +330,31 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         absolute_position, jog_speed = self.syringes[channel - 1].get_jog_parameters(direction)
 
         self.arduino.jog(channel, absolute_position, jog_speed)
+
+    def run_sequence(self):
+        # Run Channel 1
+        self.run(1)
+        self.syringe_channel_1.running = True
+
+        print('Go into Wait Loop')
+        while self.syringe_channel_1.running:
+            time.sleep(1)
+            print('Still Running')
+
+        print('SC1 finished')
+
+        self.run(2)
+        self.syringe_channel_2.running = True
+
+        while self.syringe_channel_2.running:
+            time.sleep(1)
+
+        self.run(3)
+        self.syringe_channel_3.running = True
+
+        while self.syringe_channel_3.running:
+            time.sleep(1)
+
 
     def ui_side_stop_button_clicked(self):
         self.statusBar().showMessage("All motors halted")
