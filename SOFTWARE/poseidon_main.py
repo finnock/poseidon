@@ -114,8 +114,8 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 
         print("Threadpool Started")
 
-        # self.ui_update_thread = Thread(self.ui_update_syringe_channel_position_displays)
-        # self.ui_update_thread.start()
+        self.ui_update_thread = Thread(self.ui_update_syringe_channel_position_displays)
+        self.ui_update_thread.start()
 
         print("UI Update Thread Started")
 
