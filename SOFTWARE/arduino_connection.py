@@ -166,6 +166,7 @@ class Arduino:
     # Expose motor functionality to software on API level
     # #########################################################
 
+    # asd
     def jog(self, motor_channel, position_in_steps, speed_in_steps_per_s):
         """ Jogs the given channel in a given direction and distance
 

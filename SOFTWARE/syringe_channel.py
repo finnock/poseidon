@@ -19,6 +19,7 @@ class SyringeChannel:
         # Absolute position is None since it is not yet zeroed
         self.absolute_position = 0
         self.remaining_volume = 0
+        self.running = False
         self.acceleration = 5
 
     def get_run_parameters(self):
