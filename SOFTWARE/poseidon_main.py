@@ -115,8 +115,8 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
 
         print("Threadpool Started")
 
-        self.ui_update_thread = Thread(self.ui_update_syringe_channel_position_displays)
-        self.ui_update_thread.start()
+        # self.ui_update_thread = Thread(self.ui_update_syringe_channel_position_displays)
+        # self.ui_update_thread.start()
 
         print("UI Update Thread Started")
 
@@ -260,38 +260,40 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         self.syringe_channel_3.absolute_position = p3
         self.syringe_channel_3.remaining_volume = r3
 
+        self.ui_update_syringe_channel_position_displays()
+
     def ui_update_syringe_channel_position_displays(self):
-        print('Starting SC Thread')
+        # print('Starting SC Thread')
 
-        while True:
-            p1 = self.syringe_channel_1.absolute_position
-            r1 = self.syringe_channel_1.remaining_volume
-            p2 = self.syringe_channel_2.absolute_position
-            r2 = self.syringe_channel_2.remaining_volume
-            p3 = self.syringe_channel_3.absolute_position
-            r3 = self.syringe_channel_3.remaining_volume
+        # while True:
+        p1 = self.syringe_channel_1.absolute_position
+        r1 = self.syringe_channel_1.remaining_volume
+        p2 = self.syringe_channel_2.absolute_position
+        r2 = self.syringe_channel_2.remaining_volume
+        p3 = self.syringe_channel_3.absolute_position
+        r3 = self.syringe_channel_3.remaining_volume
 
-            # UI Slider Feedback
-            self.ui.channel_1_slider.setValue(p1)
-            self.ui.channel_2_slider.setValue(p2)
-            self.ui.channel_3_slider.setValue(p3)
+        # UI Slider Feedback
+        self.ui.channel_1_slider.setValue(p1)
+        self.ui.channel_2_slider.setValue(p2)
+        self.ui.channel_3_slider.setValue(p3)
 
-            # UI LCD Feedback
-            self.ui.channel_1_pos_lcd.display(self.syringe_channel_1.steps_to_mm(p1))
-            self.ui.channel_2_pos_lcd.display(self.syringe_channel_2.steps_to_mm(p2))
-            self.ui.channel_3_pos_lcd.display(self.syringe_channel_3.steps_to_mm(p3))
+        # UI LCD Feedback
+        self.ui.channel_1_pos_lcd.display(self.syringe_channel_1.steps_to_mm(p1))
+        self.ui.channel_2_pos_lcd.display(self.syringe_channel_2.steps_to_mm(p2))
+        self.ui.channel_3_pos_lcd.display(self.syringe_channel_3.steps_to_mm(p3))
 
-            # UI LCD Feedback
-            self.ui.channel_1_rem_lcd.display(self.syringe_channel_1.steps_to_ml(r1))
-            self.ui.channel_2_rem_lcd.display(self.syringe_channel_2.steps_to_ml(r2))
-            self.ui.channel_3_rem_lcd.display(self.syringe_channel_3.steps_to_ml(r3))
+        # UI LCD Feedback
+        self.ui.channel_1_rem_lcd.display(self.syringe_channel_1.steps_to_ml(r1))
+        self.ui.channel_2_rem_lcd.display(self.syringe_channel_2.steps_to_ml(r2))
+        self.ui.channel_3_rem_lcd.display(self.syringe_channel_3.steps_to_ml(r3))
 
-            self.syringe_channel_1.running = (r1 > 0)
-            self.syringe_channel_2.running = (r2 > 0)
-            self.syringe_channel_3.running = (r3 > 0)
+        self.syringe_channel_1.running = (r1 > 0)
+        self.syringe_channel_2.running = (r2 > 0)
+        self.syringe_channel_3.running = (r3 > 0)
             # self.ui.channel_1_pos_lcd.repaint()
 
-            time.sleep(0.2)
+            # time.sleep(0.2)
 
     def run(self, channel):
 
