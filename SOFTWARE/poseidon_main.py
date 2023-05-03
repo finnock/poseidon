@@ -95,7 +95,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
         # self.ui_update_thread.start()
 
         if self.config['connection']['auto-connect'] == 'True':
-            print(f"Attempting Auto Connect to port {self.config['connection']['port']}")
+            print(f"Attempting Auto Connect to port {self.config['connection']['com-port']}")
             self.ui_setup_connect_button_clicked()
 
         print("Passed Auto Connect. Finished __init__")
