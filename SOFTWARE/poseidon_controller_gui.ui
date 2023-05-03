@@ -720,6 +720,9 @@
                  <property name="class" stdset="0">
                   <string>blue_channel</string>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
                <item>
@@ -1230,6 +1233,9 @@
                  <property name="class" stdset="0">
                   <string>green_channel</string>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
                <item>
@@ -1749,6 +1755,9 @@
                  <property name="class" stdset="0">
                   <string>red_channel</string>
                  </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">sequence_control_buttons</string>
+                 </attribute>
                 </widget>
                </item>
                <item>
