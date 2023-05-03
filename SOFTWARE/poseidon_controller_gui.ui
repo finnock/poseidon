@@ -493,10 +493,16 @@
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>70</width>
+                   <height>70</height>
+                  </size>
+                 </property>
                  <property name="maximumSize">
                   <size>
-                   <width>60</width>
-                   <height>60</height>
+                   <width>70</width>
+                   <height>70</height>
                   </size>
                  </property>
                  <property name="font">
@@ -536,10 +542,16 @@
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>70</width>
+                   <height>70</height>
+                  </size>
+                 </property>
                  <property name="maximumSize">
                   <size>
-                   <width>60</width>
-                   <height>60</height>
+                   <width>70</width>
+                   <height>70</height>
                   </size>
                  </property>
                  <property name="font">
@@ -616,10 +628,16 @@
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>70</width>
+                   <height>70</height>
+                  </size>
+                 </property>
                  <property name="maximumSize">
                   <size>
-                   <width>60</width>
-                   <height>60</height>
+                   <width>70</width>
+                   <height>70</height>
                   </size>
                  </property>
                  <property name="font">
@@ -659,10 +677,16 @@
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>70</width>
+                   <height>70</height>
+                  </size>
+                 </property>
                  <property name="maximumSize">
                   <size>
-                   <width>60</width>
-                   <height>60</height>
+                   <width>70</width>
+                   <height>70</height>
                   </size>
                  </property>
                  <property name="font">
@@ -703,10 +727,16 @@
                  <property name="enabled">
                   <bool>true</bool>
                  </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>70</width>
+                   <height>70</height>
+                  </size>
+                 </property>
                  <property name="maximumSize">
                   <size>
-                   <width>40</width>
-                   <height>40</height>
+                   <width>70</width>
+                   <height>70</height>
                   </size>
                  </property>
                  <property name="font">
@@ -933,7 +963,7 @@
               <widget class="QLabel" name="channel_1_volume_label">
                <property name="font">
                 <font>
-                 <pointsize>12</pointsize>
+                 <pointsize>16</pointsize>
                 </font>
                </property>
                <property name="text">
@@ -945,7 +975,7 @@
               <widget class="QDoubleSpinBox" name="channel_1_volume_input">
                <property name="font">
                 <font>
-                 <pointsize>12</pointsize>
+                 <pointsize>16</pointsize>
                 </font>
                </property>
                <property name="specialValueText">
@@ -960,7 +990,7 @@
               <widget class="QLabel" name="channel_1_speed_label">
                <property name="font">
                 <font>
-                 <pointsize>12</pointsize>
+                 <pointsize>16</pointsize>
                 </font>
                </property>
                <property name="text">
@@ -972,7 +1002,7 @@
               <widget class="QDoubleSpinBox" name="channel_1_speed_input">
                <property name="font">
                 <font>
-                 <pointsize>12</pointsize>
+                 <pointsize>16</pointsize>
                 </font>
                </property>
                <property name="prefix">
@@ -1015,10 +1045,16 @@
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>70</width>
+                   <height>70</height>
+                  </size>
+                 </property>
                  <property name="maximumSize">
                   <size>
-                   <width>60</width>
-                   <height>60</height>
+                   <width>70</width>
+                   <height>70</height>
                   </size>
                  </property>
                  <property name="font">
@@ -1055,10 +1091,16 @@
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>70</width>
+                   <height>70</height>
+                  </size>
+                 </property>
                  <property name="maximumSize">
                   <size>
-                   <width>60</width>
-                   <height>60</height>
+                   <width>70</width>
+                   <height>70</height>
                   </size>
                  </property>
                  <property name="font">
@@ -1129,10 +1171,16 @@
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>70</width>
+                   <height>70</height>
+                  </size>
+                 </property>
                  <property name="maximumSize">
                   <size>
-                   <width>60</width>
-                   <height>60</height>
+                   <width>70</width>
+                   <height>70</height>
                   </size>
                  </property>
                  <property name="font">
@@ -1172,10 +1220,16 @@
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>70</width>
+                   <height>70</height>
+                  </size>
+                 </property>
                  <property name="maximumSize">
                   <size>
-                   <width>60</width>
-                   <height>60</height>
+                   <width>70</width>
+                   <height>70</height>
                   </size>
                  </property>
                  <property name="font">
@@ -1216,10 +1270,16 @@
                  <property name="enabled">
                   <bool>true</bool>
                  </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>70</width>
+                   <height>70</height>
+                  </size>
+                 </property>
                  <property name="maximumSize">
                   <size>
-                   <width>40</width>
-                   <height>40</height>
+                   <width>70</width>
+                   <height>70</height>
                   </size>
                  </property>
                  <property name="font">
@@ -1443,7 +1503,7 @@
               <widget class="QLabel" name="channel_2_volume_label">
                <property name="font">
                 <font>
-                 <pointsize>12</pointsize>
+                 <pointsize>16</pointsize>
                 </font>
                </property>
                <property name="text">
@@ -1455,7 +1515,7 @@
               <widget class="QDoubleSpinBox" name="channel_2_volume_input">
                <property name="font">
                 <font>
-                 <pointsize>12</pointsize>
+                 <pointsize>16</pointsize>
                 </font>
                </property>
                <property name="specialValueText">
@@ -1476,7 +1536,7 @@
               <widget class="QLabel" name="channel_2_speed_label">
                <property name="font">
                 <font>
-                 <pointsize>12</pointsize>
+                 <pointsize>16</pointsize>
                 </font>
                </property>
                <property name="text">
@@ -1488,7 +1548,7 @@
               <widget class="QDoubleSpinBox" name="channel_2_speed_input">
                <property name="font">
                 <font>
-                 <pointsize>12</pointsize>
+                 <pointsize>16</pointsize>
                 </font>
                </property>
                <property name="prefix">
@@ -1537,10 +1597,16 @@
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>70</width>
+                   <height>70</height>
+                  </size>
+                 </property>
                  <property name="maximumSize">
                   <size>
-                   <width>60</width>
-                   <height>60</height>
+                   <width>70</width>
+                   <height>70</height>
                   </size>
                  </property>
                  <property name="font">
@@ -1577,10 +1643,16 @@
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>70</width>
+                   <height>70</height>
+                  </size>
+                 </property>
                  <property name="maximumSize">
                   <size>
-                   <width>60</width>
-                   <height>60</height>
+                   <width>70</width>
+                   <height>70</height>
                   </size>
                  </property>
                  <property name="font">
@@ -1651,10 +1723,16 @@
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>70</width>
+                   <height>70</height>
+                  </size>
+                 </property>
                  <property name="maximumSize">
                   <size>
-                   <width>60</width>
-                   <height>60</height>
+                   <width>70</width>
+                   <height>70</height>
                   </size>
                  </property>
                  <property name="font">
@@ -1694,10 +1772,16 @@
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>70</width>
+                   <height>70</height>
+                  </size>
+                 </property>
                  <property name="maximumSize">
                   <size>
-                   <width>60</width>
-                   <height>60</height>
+                   <width>70</width>
+                   <height>70</height>
                   </size>
                  </property>
                  <property name="font">
@@ -1738,10 +1822,16 @@
                  <property name="enabled">
                   <bool>true</bool>
                  </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>70</width>
+                   <height>70</height>
+                  </size>
+                 </property>
                  <property name="maximumSize">
                   <size>
-                   <width>40</width>
-                   <height>40</height>
+                   <width>70</width>
+                   <height>70</height>
                   </size>
                  </property>
                  <property name="font">
@@ -1956,7 +2046,7 @@
               <widget class="QLabel" name="channel_3_volume_label">
                <property name="font">
                 <font>
-                 <pointsize>12</pointsize>
+                 <pointsize>16</pointsize>
                 </font>
                </property>
                <property name="text">
@@ -1968,7 +2058,7 @@
               <widget class="QDoubleSpinBox" name="channel_3_volume_input">
                <property name="font">
                 <font>
-                 <pointsize>12</pointsize>
+                 <pointsize>16</pointsize>
                 </font>
                </property>
                <property name="specialValueText">
@@ -1986,7 +2076,7 @@
               <widget class="QLabel" name="channel_3_speed_label">
                <property name="font">
                 <font>
-                 <pointsize>12</pointsize>
+                 <pointsize>16</pointsize>
                 </font>
                </property>
                <property name="text">
@@ -1998,7 +2088,7 @@
               <widget class="QDoubleSpinBox" name="channel_3_speed_input">
                <property name="font">
                 <font>
-                 <pointsize>12</pointsize>
+                 <pointsize>16</pointsize>
                 </font>
                </property>
                <property name="prefix">
@@ -2039,7 +2129,7 @@
              </property>
              <property name="font">
               <font>
-               <pointsize>15</pointsize>
+               <pointsize>16</pointsize>
               </font>
              </property>
              <property name="text">
@@ -2051,7 +2141,7 @@
             <widget class="QDoubleSpinBox" name="jog_delta_input">
              <property name="font">
               <font>
-               <pointsize>15</pointsize>
+               <pointsize>16</pointsize>
               </font>
              </property>
             </widget>
@@ -2060,7 +2150,7 @@
             <widget class="QLabel" name="jog_delta_unit_label">
              <property name="font">
               <font>
-               <pointsize>15</pointsize>
+               <pointsize>16</pointsize>
               </font>
              </property>
              <property name="text">
@@ -2072,7 +2162,7 @@
             <widget class="QDoubleSpinBox" name="jog_delta_speed_input">
              <property name="font">
               <font>
-               <pointsize>15</pointsize>
+               <pointsize>16</pointsize>
               </font>
              </property>
             </widget>
@@ -2081,7 +2171,7 @@
             <widget class="QLabel" name="jog_delta_speed_unit_label">
              <property name="font">
               <font>
-               <pointsize>15</pointsize>
+               <pointsize>16</pointsize>
               </font>
              </property>
              <property name="text">
@@ -2096,7 +2186,7 @@
              </property>
              <property name="sizeHint" stdset="0">
               <size>
-               <width>541</width>
+               <width>524</width>
                <height>20</height>
               </size>
              </property>
