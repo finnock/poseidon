@@ -98,6 +98,9 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
             print(f"Attempting Auto Connect to port {self.config['connection']['com-port']}")
             self.ui_setup_connect_button_clicked()
 
+        if self.config['misc']['fullscreen'] == 'True':
+            self.showFullScreen()
+
         print("Passed Auto Connect. Finished __init__")
 
     def keystroke(self, key):
@@ -404,7 +407,7 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
             self.config['misc']['fullscreen'] = str(False)
         else:
             self.showFullScreen()
-            self.config['misc']['fullscreen'] = str(False)
+            self.config['misc']['fullscreen'] = str(True)
 
 
     # Populate the microstepping amounts for the dropdown menu
