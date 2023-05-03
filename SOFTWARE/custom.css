@@ -1,0 +1,29 @@
+.blue_channel {{
+    color: #17a2b8;
+    border-color: #17a2b8;
+    background-color: #0a333a;
+}}
+
+.blue_channel_frame{{
+    border-color: #17a2b8;
+}}
+
+.green_channel {{
+    color: #1cab52;
+    border-color: #1cab52;
+    background-color: #083a1b;
+}}
+
+.green_channel_frame {{
+    border-color: #1cab52;
+}}
+
+.red_channel {{
+    color: #c91528;
+    border-color: #c91528;
+    background-color: #720514;
+}}
+
+.red_channel_frame {{
+    border-color: #c91528;
+}}

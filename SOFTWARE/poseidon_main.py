@@ -43,37 +43,23 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
     def __init__(self, app):
         super(MainWindow, self).__init__()
         self.app = app
-        apply_stylesheet(self.app, theme="custom_dark_red.xml", extra={
-            'density_scale': '0'
-        })
 
-        print("Applied Stylesheet")
+        apply_stylesheet(self.app, "custom_dark_red.xml", css_file="custom.css")
 
         # Setting the UI to a class variable and connecting all GUI Components
         self.ui = poseidon_controller_gui.Ui_MainWindow()
 
-        print("Main Window Created")
-
         self.ui.setupUi(self)
-
-        print("Setup UI")
 
         # initialize config parser module and start config load routine
         self.config = self.ui_setup_load_settings_button_clicked()
 
-        print("Config Loaded")
-
         # creating Arduino connection object
         self.arduino = Arduino(self.config, self)
 
-        print("Arduino Created")
-        # Put comments here
         # Populate drop-down UI Objects
         self.populate_syringe_sizes()
         self.populate_pump_units()
-
-
-        print("Poulated")
 
         # Set up Syringe Channels
         self.syringe_channel_1 = SyringeChannel(self, 1, self.config)
@@ -94,34 +80,22 @@ class MainWindow(QtWidgets.QMainWindow, poseidon_controller_gui.Ui_MainWindow):
             sc.syringe_area = self.syringe_options[sc.syringe_size]['area']
             sc.syringe_total_volume = self.syringe_options[sc.syringe_size]['volume']
 
-
-        print("Syringes Created")
-
         # Connect all UI Objects to the necessary functions
         self.connect_all_gui_components()
 
-        print("Connected GUI")
-
         # Disable all UI Elements which cant be used as long as the Arduino is not connected
-        self.ui_disable_components_when_disconnected()
-
-
-        print("Disabled UI")
+        # self.ui_disable_components_when_disconnected()
 
         # Initializing multithreading to allow parallel operations
         self.threadpool = QtCore.QThreadPool()
         self.threadpool.setMaxThreadCount(8)
         print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
 
-        print("Threadpool Started")
-
         # self.ui_update_thread = Thread(self.ui_update_syringe_channel_position_displays)
         # self.ui_update_thread.start()
 
-        print("UI Update Thread Started")
-
         if self.config['connection']['auto-connect'] == 'True':
-            print("Attempting Auto Connect")
+            print(f"Attempting Auto Connect to port {self.config['connection']['port']}")
             self.ui_setup_connect_button_clicked()
 
         print("Passed Auto Connect. Finished __init__")
